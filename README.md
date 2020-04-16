@@ -1,6 +1,9 @@
 # AUTOTS
 Automatic Azoarene Transition State Screening
-git clone https://github.com/neal-p/AUTOTS.git
+
+copy the code to your home directory with 
+'git clone https://github.com/neal-p/autots.git'
+
 enter directory and run the ./init.sh to make autots tools easily accessible 
 
 To setup workflow, in a directory of optimized log files, run 'autots-setup'
