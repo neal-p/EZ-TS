@@ -12,6 +12,6 @@ This will create the workflow architecture and set up all calculations with the 
 You can edit the default config, 
 or change the settings of a particular workflow by editing the config file in the /someworkflow/utilities/config.py
 
-To update input files in a workflow directory based on the /someworkflow/utilities/config.py file, run 're-configure'
+To update input files in a workflow directory based on the /someworkflow/utilities/config.py file, run 're-configure' anywhere in that workflow
 
 To submit the workflow simply execute the start.sh script in the base workflow directory './start.sh'
