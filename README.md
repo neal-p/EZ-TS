@@ -4,7 +4,7 @@ Automatic Azoarene Transition State Screening
 copy the code to your home directory with 
 'git clone https://github.com/neal-p/autots.git'
 
-enter directory and run the ./init.sh to make autots tools easily accessible 
+enter directory and run the 'bash init.sh' to make autots tools easily accessible 
 
 To setup workflow, in a directory of optimized log files, run 'autots-setup'
 This will create the workflow architecture and set up all calculations with the default parameters set in /home/USER/autots/config.py
