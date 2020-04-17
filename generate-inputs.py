@@ -196,7 +196,7 @@ hostname
 work={2}
 cd $work
 touch failed-script-ran
-rm Gau-*
+
 if test -f {3}-resubmit.txt
     then
     nresub=$(sed "1q;d" {4}-resubmit.txt)
@@ -257,7 +257,7 @@ hostname
 work={2}
 cd $work
 touch failed-script-ran
-rm Gau-*
+
 if test -f {3}-resubmit.txt
     then
     nresub=$(sed "1q;d" {4}-resubmit.txt)
@@ -326,7 +326,7 @@ fi
 """.format(title,user,ts_guess,title,title,title,title,charge, multiplicity,title,charge, multiplicity,title,title,title,title,title,title,title,title,conf_search,title,title,title,title,charge,multiplicity,title,optroute,title,title,title,title,title,title,conf_search,title,title)
     return batch
 
-def SchrodingerBatch(title,ts_guess,user,utilities):
+def SchrodingerBatch(title,ts_guess,user,utilities,c1,a1,a2,c2,conf_search):
     batch="""#!/bin/bash
 #SBATCH --job-name={0}
 #SBATCH --output=out.o
@@ -342,10 +342,10 @@ hostname
 
 work={2}
 cd $work
-bash {3}/get-lowest.sh ts_guess
+bash {3}/get-lowest.sh ts_guess {4} {5} {6} {7} {8}
 
-../conf_search/{4}.sh
-""".format(title,user,ts_guess,utilities,title)
+../conf_search/{9}.sh
+""".format(title,user,ts_guess,utilities,c1,a1,a2,c2,conf_search,title)
     return batch
 
 def Sbatch(optpartition,optcores,user,optmemory,opttime,njobs,ts_guess,title):
@@ -437,40 +437,15 @@ hostname
 work={1}
 cd $work
 
-bash {2}/get_lowest.sh conf_opt {2}
+bash {2}/get-lowest.sh conf_opt {2}
 """.format(title,conf_opt,title,utilities)
     return lowest
 
 def Maestro(c1,a1,a2,c2,title,xyz,conf_search,conf_opt):
-    a1=a1+1
-    a2=a2+1
-    c2=c2+1
-    c1=c1+1
-    angle1=Ang(xyz,c1,a1,a2)
-    angle2=Ang(xyz,c2,a2,a1)
-    maestroinput="""{0}.mae
-{1}-out.mae
- MMOD       0      1      0      0     0.0000     0.0000     0.0000     0.0000
- DEBG    1003      0      0      0     0.0000     0.0000     0.0000     0.0000
- FFLD      16      1      0      0     1.0000     0.0000     0.0000     0.0000
- SOLV       3      1      0      0     0.0000     0.0000     0.0000     0.0000
- EXNB       0      0      0      0    12.0000    20.0000     4.0000     0.0000
- BDCO       0      0      0      0    89.4427 99999.0000     0.0000     0.0000
- READ       0      0      0      0     0.0000     0.0000     0.0000     0.0000
- FXBA      {2}     {3}     {4}      0 10000000.0000   {5:.3f}     0.0000     0.0000
- FXBA      {6}     {7}     {8}      0 10000000.0000   {9:.3f}     0.0000     0.0000
- CRMS       0      0      0      0     0.0000     3.0000     0.0000     2.0000
- LMCS   10000      0      0      0     0.0000     0.0000     3.0000    12.0000
- MCSS       2      0      0      0   500.0000     0.0000     0.0000     0.0000
- MCOP       1      0      0      0     0.0000    10.0000     0.0000     0.0000
- DEMX       0   1000      0      0   500.0000  1000.0000     0.0000     0.0000
- MSYM       0      0      0      0     0.0000     0.0000     0.0000     0.0000
- AUOP       0      0      0      0   500.0000     0.0000     0.0000     0.0000
- AUTO       0      2      1      1     0.0000    -1.0000     0.0000     2.0000
- CONV       2      0      0      0     0.0500     0.0000     0.0000     0.0000
- MINI       3      0   3000      0     0.0000     0.0000     0.0000     0.0000
-""".format(title, title, c1, a1, a2, angle1, c2, a2, a1, angle2)
-
+    C1=c1+1
+    A1=a1+1
+    A2=a2+1
+    C2=c2+1
     maestrosubmit="""#!/bin/bash
 module load schrodinger/2019-4
 cd {0}
@@ -479,9 +454,10 @@ sed -i 's/{6}    {7}    1/ {8}    {9}    2/g' {10}.mol2
 $SCHRODINGER/utilities/mol2convert -imol2 {11}.mol2 -omae {12}.mae
 sed -i 's/7 1 N/7 0 N/g' {13}.mae
 ID=$("${{SCHRODINGER}}/macromodel" -JOBNAME maestroconf -HOST discovery-debug -LOCAL ./{14}.com | awk '{{ print $2 }}' | head -n 1 )
-sbatch --dependency=afterok:$ID {15}/{16}-submit.sbatch""".format(conf_search,a1, a2, a1, a2, title,a2, a1, a2, a1, title,title,title,title,title,conf_opt,title)
+sbatch --dependency=afterok:$ID {15}/{16}-submit.sbatch""".format(conf_search,A1, A2, A1, A2, title,A2, A1, A2, A1, title,title,title,title,title,conf_opt,title)
 
-    return maestroinput, maestrosubmit
+    return maestrosubmit
+
 
 def Ang(xyz,a,b,c):
     #a<-b->c
@@ -810,7 +786,7 @@ def Printxyz(xyz,atoms,title,index,cores,memory,method,basis,optimization_route,
         x,y,z=line
         e=Element(str(int(atoms[n]))).getSymbol()
         coord+='%-5s%16.8f%16.8f%16.8f\n' % (e,x,y,z)
-        com="""%chk={0}-{1}-rot.chk
+        com="""%chk={0}-rot-{1}.chk
 %nprocs={2}
 %mem={3}GB
 # {4}/{5} {6}
@@ -819,7 +795,7 @@ auto-ts generator
 
 {7} {8}
 """.format(title,index,optcores,optmemory,optmethod,optbasis,optroute,charge,multiplicity)
-    with open('%s/%s-%s-rot.com' % (ts_guess,title,index),'w') as out:
+    with open('%s/%s-rot-%s.com' % (ts_guess,title,index),'w') as out:
         out.write(com)
         out.write(coord)
         out.write(' ')
@@ -972,19 +948,16 @@ def main():
         file,ax,ang,index=i
         charge,multiplicity,c1,a1,a2,c2,title,xyz,new_mol=MoRot(file,ax,ang,index,optcores,optmemory,optmethod,optbasis,optroute,ts_guess)
         if b == 0:
-            maestroin,maestrosub=Maestro(c1,a1,a2,c2,title,xyz,conf_search,conf_opt)
-            with open('{0}/{1}.com'.format(conf_search,title),'w') as maestro1:
-                maestro1.write(maestroin)
-            with open('{0}/{1}.sh'.format(conf_search,title),'w') as maestro2:
-                maestro2.write(maestrosub)
+            with open('{0}/{1}.sh'.format(conf_search,title),'w') as maestro:
+                maestro.write(Maestro(c1,a1,a2,c2,title,xyz,conf_search,conf_opt))
             with open('{0}/{1}-conf_search.sbatch'.format(conf_search,title),'w') as batch:
-                batch.write(SchrodingerBatch(title,ts_guess,user,utilities))
+                batch.write(SchrodingerBatch(title,ts_guess,user,utilities,c1,a1,a2,c2,conf_search))
             with open('{0}/{1}-submit.sbatch'.format(ts_guess,title),'w') as sbatch:
                 sbatch.write(Sbatch(optpartition,optcores,user,optmemory,opttime,len(jobs),ts_guess,title))
             with open('{0}/{1}-submit.sbatch'.format(conf_opt,title),'w') as conf:
                 conf.write(Conf(title,optpartition,optcores,user,optmemory,opttime,conf_opt,conf_search,lowest_ts))
             with open('{0}/{1}-coms.txt'.format(ts_guess,title),'w') as coms:
-                coms.write("{0}-{1}-rot.com\n".format(title,index))
+                coms.write("{0}-rot-{1}.com\n".format(title,index))
             with open('{0}/{1}-lowest.sbatch'.format(lowest_ts,title),'w') as lowest:
                 lowest.write(Getlowest(title,conf_opt,utilities))
             with open('{0}/{1}-failed.sbatch'.format(ts_guess,title), 'w') as failed:
@@ -993,7 +966,7 @@ def main():
                 failed.write(Fixconfopt(title,user,conf_opt,lowest_ts,optroute,charge,multiplicity)) 
         else:
             with open('{0}/{1}-coms.txt'.format(ts_guess,title),'a') as coms:
-                coms.write("{0}-{1}-rot.com\n".format(title,index))
+                coms.write("{0}-rot-{1}.com\n".format(title,index))
         if b < 6:
             b+=1
         else:

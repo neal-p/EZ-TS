@@ -18,6 +18,7 @@ for n in ../input/*log
     if [[ $1 == 'ts_guess' ]]
         then
         obabel $lowestenergyts -o mol2 -O ../conf_search/$search.mol2
+        python3 ../utilities/maestro-input.py $lowestenergyts $2 $3 $4 $5 $6
     elif [[ $1 == 'conf_opt' ]]
         then
         cp $lowestenergyts ../lowest_ts/
