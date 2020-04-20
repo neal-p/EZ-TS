@@ -1,6 +1,3 @@
-## Rotate Molecular by any Axis
-## Mar 10 Jingbai Li
-
 from config import *
 import os,sys
 import numpy as np
@@ -437,8 +434,8 @@ hostname
 work={1}
 cd $work
 
-bash {2}/get-lowest.sh conf_opt {2}
-""".format(title,conf_opt,title,utilities)
+bash {2}/get-lowest.sh conf_opt {3}
+""".format(title,conf_opt,utilities,title)
     return lowest
 
 def Maestro(c1,a1,a2,c2,title,xyz,conf_search,conf_opt):
