@@ -205,7 +205,7 @@ if [[ $nresub -lt 2 ]]
     then
     rm {5}-resubmit.txt
     echo $nresub >> {6}-resubmit.txt
-    for i in *log
+    for i in {7}*log
         do
         finished=$(tail $i | grep 'Normal termination' -c )
         if [[ $finished -lt 1 ]]
@@ -213,28 +213,28 @@ if [[ $nresub -lt 2 ]]
             maxiter=$(grep "Number of steps exceeded" $i)
             if [[ $maxiter -gt 0 ]]
                 then
-                sed -i '1,/{7} {8}/!d' ${{i%.*}}.com
+                sed -i '1,/{8} {9}/!d' ${{i%.*}}.com
                 obabel $i -o xyz |tail -n +3 >> ${{i%.*}}.com
                 echo " " >> ${{i%.*}}.com
-                echo ${{i%.*}}.com >> {9}-resubmit.txt
+                echo ${{i%.*}}.com >> {10}-resubmit.txt
             else
-                sed -i '1,/{10} {11}/!d' ${{i%.*}}.com
+                sed -i '1,/{11} {12}/!d' ${{i%.*}}.com
                 obabel $i -o xyz |tail -n +3 >> ${{i%.*}}.com
                 echo " " >> ${{i%.*}}.com
-                echo ${{i%.*}}.com >> {12}-resubmit.txt
+                echo ${{i%.*}}.com >> {13}-resubmit.txt
 
             fi
         fi
     done
-    toresub=$(cat {13}-resubmit.txt |wc -l)
-    currentarray=$(sed "12q;d" {14}-submit.sbatch)
-    sed -i "s/$currentarray/#SBATCH --array=2-$toresub/g" {15}-submit.sbatch
-    sed -i "s/{16}-coms.txt/{17}-resubmit.txt/g" {18}-submit.sbatch
-    ID=$(sbatch --parsable {19}-submit.sbatch)
-    sbatch --dependency=afterok:$ID  {20}/{21}-lowest.sbatch
-    sbatch --dependency=afternotok:$ID {22}-failed.sbatch
+    toresub=$(cat {14}-resubmit.txt |wc -l)
+    currentarray=$(sed "12q;d" {15}-submit.sbatch)
+    sed -i "s/$currentarray/#SBATCH --array=2-$toresub/g" {16}-submit.sbatch
+    sed -i "s/{17}-coms.txt/{18}-resubmit.txt/g" {19}-submit.sbatch
+    ID=$(sbatch --parsable {20}-submit.sbatch)
+    sbatch --dependency=afterok:$ID  {21}/{22}-lowest.sbatch
+    sbatch --dependency=afternotok:$ID {23}-failed.sbatch
 fi
-""".format(title,user,conf_opt,title,title,title,title,charge, multiplicity,title,charge, multiplicity,title,title,title,title,title,title,title,title,lowest_ts,title,title)
+""".format(title,user,conf_opt,title,title,title,title,title,charge, multiplicity,title,charge, multiplicity,title,title,title,title,title,title,title,title,lowest_ts,title,title)
     return batch
 
 def Fixtsguess(title,user,ts_guess,conf_search,optroute,charge,multiplicity):
@@ -266,7 +266,7 @@ if [[ $nresub -lt 2 ]]
     then
     rm {5}-resubmit.txt
     echo $nresub >> {6}-resubmit.txt
-    for i in *log
+    for i in {7}*log
         do
         finished=$(tail $i | grep 'Normal termination' -c )
         if [[ $finished -lt 1 ]]
@@ -274,53 +274,53 @@ if [[ $nresub -lt 2 ]]
             maxiter=$(grep "Number of steps exceeded" $i)
             if [[ $maxiter -gt 0 ]]
                 then
-                sed -i '1,/{7} {8}/!d' ${{i%.*}}.com
+                sed -i '1,/{7} {9}/!d' ${{i%.*}}.com
                 obabel $i -o xyz |tail -n +3 >> ${{i%.*}}.com
                 echo " " >> ${{i%.*}}.com
-                echo ${{i%.*}}.com >> {9}-resubmit.txt
+                echo ${{i%.*}}.com >> {10}-resubmit.txt
             else
-                sed -i '1,/{10} {11}/!d' ${{i%.*}}.com
+                sed -i '1,/{11} {12}/!d' ${{i%.*}}.com
                 obabel $i -o xyz |tail -n +3 >> ${{i%.*}}.com
                 echo " " >> ${{i%.*}}.com
-                echo ${{i%.*}}.com >> {12}-resubmit.txt
+                echo ${{i%.*}}.com >> {13}-resubmit.txt
 
             fi
         fi
     done
-    toresub=$(cat {13}-resubmit.txt |wc -l)
-    currentarray=$(sed "12q;d" {14}-submit.sbatch)
-    sed -i "s/$currentarray/#SBATCH --array=2-$toresub/g" {15}-submit.sbatch
-    sed -i "s/{16}-coms.txt/{17}-resubmit.txt/g" {18}-submit.sbatch
-    ID=$(sbatch --parsable {19}-submit.sbatch)
-    sbatch --dependency=afterok:$ID  {20}/{21}-conf_search.sbatch
-    sbatch --dependency=afternotok:$ID {22}-failed.sbatch
+    toresub=$(cat {14}-resubmit.txt |wc -l)
+    currentarray=$(sed "12q;d" {15}-submit.sbatch)
+    sed -i "s/$currentarray/#SBATCH --array=2-$toresub/g" {16}-submit.sbatch
+    sed -i "s/{17}-coms.txt/{18}-resubmit.txt/g" {19}-submit.sbatch
+    ID=$(sbatch --parsable {20}-submit.sbatch)
+    sbatch --dependency=afterok:$ID  {21}/{22}-conf_search.sbatch
+    sbatch --dependency=afternotok:$ID {23}-failed.sbatch
 
 elif [[ $nresub == 2 ]]
     then
     touch freqonly
-    rm {23}-resubmit.txt
-    echo $nresub >> {24}-resubmit.txt
-    for i in *log
+    rm {24}-resubmit.txt
+    echo $nresub >> {25}-resubmit.txt
+    for i in {26}*log
         do
         finished=$(tail $i | grep 'Normal termination' -c )
         if [[ $finished -lt 1 ]]
             then
-            sed -i '1,/{25} {26}/!d' ${{i%.*}}.com
+            sed -i '1,/{27} {28}/!d' ${{i%.*}}.com
             obabel $i -o xyz |tail -n +3 >> ${{i%.*}}.com
             echo " " >> ${{i%.*}}.com
-            echo ${{i%.*}}.com >> {27}-resubmit.txt
-            sed -i 's/{28}/freq=noraman/g' ${{i%.*}}.com
+            echo ${{i%.*}}.com >> {29}-resubmit.txt
+            sed -i 's/{30}/freq=noraman/g' ${{i%.*}}.com
         fi
     done
-    toresub=$(cat {29}-resubmit.txt |wc -l)
-    currentarray=$(sed "12q;d" {30}-submit.sbatch)
-    sed -i "s/$currentarray/#SBATCH --array=2-$toresub/g" {31}-submit.sbatch
-    sed -i "s/{32}-coms.txt/resubmit.txt/g" {33}-submit.sbatch
-    ID=$(sbatch --parsable {34}-submit.sbatch)
-    sbatch --dependency=afterok:$ID {35}/{36}-conf_search.sbatch
-    sbatch --dependency=afternotok:$ID {37}-failed.sbatch
+    toresub=$(cat {31}-resubmit.txt |wc -l)
+    currentarray=$(sed "12q;d" {32}-submit.sbatch)
+    sed -i "s/$currentarray/#SBATCH --array=2-$toresub/g" {33}-submit.sbatch
+    sed -i "s/{34}-coms.txt/resubmit.txt/g" {35}-submit.sbatch
+    ID=$(sbatch --parsable {36}-submit.sbatch)
+    sbatch --dependency=afterok:$ID {37}/{38}-conf_search.sbatch
+    sbatch --dependency=afternotok:$ID {39}-failed.sbatch
 fi
-""".format(title,user,ts_guess,title,title,title,title,charge, multiplicity,title,charge, multiplicity,title,title,title,title,title,title,title,title,conf_search,title,title,title,title,charge,multiplicity,title,optroute,title,title,title,title,title,title,conf_search,title,title)
+""".format(title,user,ts_guess,title,title,title,title,title,charge, multiplicity,title,charge, multiplicity,title,title,title,title,title,title,title,title,conf_search,title,title,title,title,title,charge,multiplicity,title,optroute,title,title,title,title,title,title,conf_search,title,title)
     return batch
 
 def SchrodingerBatch(title,ts_guess,user,utilities,c1,a1,a2,c2,conf_search):
