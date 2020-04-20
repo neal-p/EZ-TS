@@ -23,6 +23,8 @@ for n in ../input/*log
         then
         cp $lowestenergyts ../lowest_ts/
         grep "Sum of electronic and thermal Free Energies" ../lowest_ts/$2*log > ../lowest_ts/$2-lowest_ts-energies.txt
+        echo " " >> ../lowest_ts/$2-lowest_ts-energies.txt
+        cat $search-ts-energies.txt >> ../lowest_ts/$2-lowest_ts-energies.txt
     fi
 done
 
