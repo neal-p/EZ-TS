@@ -451,7 +451,7 @@ sed -i 's/{6}    {7}    1/ {8}    {9}    2/g' {10}.mol2
 $SCHRODINGER/utilities/mol2convert -imol2 {11}.mol2 -omae {12}.mae
 sed -i 's/7 1 N/7 0 N/g' {13}.mae
 ID=$("${{SCHRODINGER}}/macromodel" -JOBNAME maestroconf -HOST discovery-debug -LOCAL ./{14}.com | awk '{{ print $2 }}' | head -n 1 )
-sbatch --dependency=afterok:$ID {15}/{16}-submit.sbatch""".format(conf_search,A1, A2, A1, A2, title,A2, A1, A2, A1, title,title,title,title,title,conf_opt,title)
+sbatch --dependency=afterany:$ID {15}/{16}-submit.sbatch""".format(conf_search,A1, A2, A1, A2, title,A2, A1, A2, A1, title,title,title,title,title,conf_opt,title)
 
     return maestrosubmit
 
