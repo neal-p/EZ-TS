@@ -405,16 +405,24 @@ if [[ ${{SLURM_ARRAY_TASK_ID}} -eq 1 ]]
 else
     sleep 30s
 fi
-input=$(sed "${{SLURM_ARRAY_TASK_ID}}q;d" {20}-coms.txt)
-export INPUT=$input
-export WORKDIR=$work
-export GAUSS_SCRDIR=$work
-export g16root=/work/lopez/
-. $g16root/g16/bsd/g16.profile
 
-cd $WORKDIR
-$g16root/g16/g16 $INPUT
-""".format(title,optpartition,optcores,user,optmemory,opttime,conf_opt,conf_search,title,conf_search,title,conf_search,title,conf_opt,title,title,title,lowest_ts,title,title,title)
+nconf=$(cat {20}-coms.txt |wc -l)
+
+if [[ ${{SLURM_ARRAY_TASK_ID}} -le $nconf ]]
+    then
+    input=$(sed "${{SLURM_ARRAY_TASK_ID}}q;d" {21}-coms.txt)
+    export INPUT=$input
+    export WORKDIR=$work
+    export GAUSS_SCRDIR=$work
+    export g16root=/work/lopez/
+    . $g16root/g16/bsd/g16.profile
+
+    cd $WORKDIR
+    $g16root/g16/g16 $INPUT
+else
+    echo "no ${{SLURM_ARRAY_TASK_ID}}'th conformer generated" >> ../lowest_ts/{22}-lowest_ts-energies.txt
+fi
+""".format(title,optpartition,optcores,user,optmemory,opttime,conf_opt,conf_search,title,conf_search,title,conf_search,title,conf_opt,title,title,title,lowest_ts,title,title,title,title)
     return conf
 
 def Getlowest(title,conf_opt,utilities):
