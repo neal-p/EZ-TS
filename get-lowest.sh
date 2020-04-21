@@ -15,11 +15,11 @@
         lowestenergyts=$(sort -g -k2,2 $search-ts-energies.txt | head -1 |awk '{ print $1 }')
 
 #if this is lowest energy guess_ts, then setup for conformational search, if this is final lowest TS move to lowest_ts
-        if [[ $1 == 'ts_guess' ]]
+        if [[ $2 == 'ts_guess' ]]
             then
             obabel $lowestenergyts -o mol2 -O ../conf_search/$search.mol2
             python3 ../utilities/maestro-input.py $lowestenergyts $3 $4 $5 $6 $7
-        elif [[ $1 == 'conf_opt' ]]
+        elif [[ $2 == 'conf_opt' ]]
             then
             cp $lowestenergyts ../lowest_ts/
             grep "Sum of electronic and thermal Free Energies" ../lowest_ts/$1*log > ../lowest_ts/$1-lowest_ts-energies.txt
