@@ -422,7 +422,7 @@ if [[ ${{SLURM_ARRAY_TASK_ID}} -le $nconf ]]
 else
     echo "no ${{SLURM_ARRAY_TASK_ID}}'th conformer generated" >> ../lowest_ts/{22}-lowest_ts-energies.txt
 fi
-""".format(title,optpartition,optcores,user,optmemory,opttime,conf_opt,conf_search,title,conf_search,title,conf_search,title,conf_opt,title,title,title,lowest_ts,title,title,title,title)
+""".format(title,optpartition,optcores,user,optmemory,opttime,conf_opt,conf_search,title,conf_search,title,conf_search,title,conf_opt,title,title,title,lowest_ts,title,title,title,title,title)
     return conf
 
 def Getlowest(title,conf_opt,utilities):
