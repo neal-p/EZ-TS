@@ -448,10 +448,12 @@ module load schrodinger/2019-4
 cd {0}
 sed -i 's/{1}    {2}    1/ {3}    {4}    2/g' {5}.mol2
 sed -i 's/{6}    {7}    1/ {8}    {9}    2/g' {10}.mol2
-$SCHRODINGER/utilities/mol2convert -imol2 {11}.mol2 -omae {12}.mae
-sed -i 's/7 1 N/7 0 N/g' {13}.mae
-ID=$("${{SCHRODINGER}}/macromodel" -JOBNAME maestroconf -HOST discovery-debug -LOCAL ./{14}.com | awk '{{ print $2 }}' | head -n 1 )
-sbatch --dependency=afterany:$ID {15}/{16}-submit.sbatch""".format(conf_search,A1, A2, A1, A2, title,A2, A1, A2, A1, title,title,title,title,title,conf_opt,title)
+sed -i 's/{11}     {12}    1/ {13}    {14}    2/g' {15}.mol2
+sed -i 's/{16}     {17}    1/ {18}    {19}    2/g' {20}.mol2
+$SCHRODINGER/utilities/mol2convert -imol2 {21}.mol2 -omae {22}.mae
+sed -i 's/7 1 N/7 0 N/g' {23}.mae
+ID=$("${{SCHRODINGER}}/macromodel" -JOBNAME maestroconf -HOST discovery-debug -LOCAL ./{24}.com | awk '{{ print $2 }}' | head -n 1 )
+sbatch --dependency=afterany:$ID {25}/{26}-submit.sbatch""".format(conf_search,A1, A2, A1, A2, title,A2, A1, A2, A1, title,A1, A2, A1, A2, title,A2, A1, A2, A1, title,title,title,title,title,conf_opt,title)
 
     return maestrosubmit
 
