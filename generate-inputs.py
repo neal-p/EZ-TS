@@ -339,10 +339,10 @@ hostname
 
 work={2}
 cd $work
-bash {3}/get-lowest.sh ts_guess {4} {5} {6} {7} {8}
+bash {3}/get-lowest.sh {4} ts_guess {5} {6} {7} {8} {9}
 
-../conf_search/{9}.sh
-""".format(title,user,ts_guess,utilities,c1,a1,a2,c2,conf_search,title)
+../conf_search/{10}.sh
+""".format(title,user,ts_guess,utilities,title,c1,a1,a2,c2,conf_search,title)
     return batch
 
 def Sbatch(optpartition,optcores,user,optmemory,opttime,njobs,ts_guess,title):
@@ -442,7 +442,7 @@ hostname
 work={1}
 cd $work
 
-bash {2}/get-lowest.sh conf_opt {3}
+bash {2}/get-lowest.sh {3} conf_opt
 """.format(title,conf_opt,utilities,title)
     return lowest
 
