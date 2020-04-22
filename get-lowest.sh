@@ -22,7 +22,7 @@
         elif [[ $2 == 'conf_opt' ]]
             then
             cp $lowestenergyts ../lowest_ts/
-            grep "Sum of electronic and thermal Free Energies" ../lowest_ts/$1*log > ../lowest_ts/$1-lowest_ts-energies.txt
+            grep "Sum of electronic and thermal Free Energies" ../lowest_ts/$1*log >> ../lowest_ts/$1-lowest_ts-energies.txt
             echo " " >> ../lowest_ts/$1-lowest_ts-energies.txt
             cat $search-ts-energies.txt >> ../lowest_ts/$1-lowest_ts-energies.txt
         fi
