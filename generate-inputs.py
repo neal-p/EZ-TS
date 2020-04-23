@@ -656,7 +656,7 @@ def Printfrag(frag):
 
     return info
 
-def MoRot(file,ax,ang,index,optcores,optmemory,optmethod,optbasis,optroute,ts_guess):
+def MoRot(file,ax,ang,index,optcores,optmemory,optmethod,optbasis,optroute,ts_guess,specialopts):
     ## This function rotate dihedral for a given molecule, axis, and angles.
 
     ## read coordinates
@@ -778,7 +778,7 @@ def MoRot(file,ax,ang,index,optcores,optmemory,optmethod,optbasis,optroute,ts_gu
             xyz=xyz2
 
     # save coordinates
-    out_coord=Printxyz(xyz,atoms,title,index,optcores,optmemory,optmethod,optbasis,optroute,charge,multiplicity,ts_guess)
+    out_coord=Printxyz(xyz,atoms,title,index,optcores,optmemory,optmethod,optbasis,optroute,charge,multiplicity,ts_guess,specialopts)
     info_frag1=Printfrag(frag1)
     info_frag2=Printfrag(frag2)
     info="""
@@ -808,7 +808,7 @@ def MoRot(file,ax,ang,index,optcores,optmemory,optmethod,optbasis,optroute,ts_gu
 
         return charge,multiplicity,c1,a1,a2,c2,title,xyz,out_coord
 
-def Printxyz(xyz,atoms,title,index,cores,memory,method,basis,optimization_route,charge,multiplicity,ts_guess):
+def Printxyz(xyz,atoms,title,index,cores,memory,method,basis,optimization_route,charge,multiplicity,ts_guess,specialopts):
     #natom=len(xyz)
     coord=''
     for n,line in enumerate(xyz):
@@ -818,12 +818,12 @@ def Printxyz(xyz,atoms,title,index,cores,memory,method,basis,optimization_route,
         com="""%chk={0}-rot-{1}.chk
 %nprocs={2}
 %mem={3}GB
-# {4}/{5} {6}
+# {4}/{5} {6} {7}
 
 auto-ts generator
 
-{7} {8}
-""".format(title,index,optcores,optmemory,optmethod,optbasis,optroute,charge,multiplicity)
+{8} {9}
+""".format(title,index,optcores,optmemory,optmethod,optbasis,optroute,specialopts,charge,multiplicity)
     with open('%s/%s-rot-%s.com' % (ts_guess,title,index),'w') as out:
         out.write(com)
         out.write(coord)
@@ -978,7 +978,7 @@ def main():
     for n,i in enumerate(jobs):
         frag1=[]
         file,ax,ang,index=i
-        charge,multiplicity,c1,a1,a2,c2,title,xyz,new_mol=MoRot(file,ax,ang,index,optcores,optmemory,optmethod,optbasis,optroute,ts_guess)
+        charge,multiplicity,c1,a1,a2,c2,title,xyz,new_mol=MoRot(file,ax,ang,index,optcores,optmemory,optmethod,optbasis,optroute,ts_guess,specialopts)
         if b == 0:
             with open('{0}/{1}.sh'.format(conf_search,title),'w') as maestro:
                 maestro.write(Maestro(c1,a1,a2,c2,title,xyz,conf_search,conf_opt))
