@@ -38,4 +38,4 @@ echo "conf_opt='$workdir/conf_opt'" >> utilities/config.py
 echo "inputdir='$workdir/input'" >> utilities/config.py
 
 cd input
-python3 ../utilities/generate-inputs.py -l ts_guess-list.txt
+python3 ../utilities/generate-inputs.py -l ts_guess-list.txt $1
