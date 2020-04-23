@@ -4,17 +4,28 @@
         do
         freq=$(grep "Frequencies" -m1 $i |awk '{ print $3 }' )
         freqint=${freq%.*}
-        energy=$(grep "Sum of electronic and thermal Free Energies" $i | awk '{ print $8 }')
         if [[ $freqint -lt -200 ]]
             then
+            energy=$(grep "Sum of electronic and thermal Free Energies" $i | awk '{ print $8 }')
             echo $i $energy >> $search-ts-energies.txt
-        else
-            echo "$i does not have a valid negative frequency $freqint $energy" >> $search-ts-energies.txt
         fi
      done
     if test -f "$search-ts-energies.txt"
         then
         lowestenergyts=$(sort -g -k2,2 $search-ts-energies.txt | head -1 |awk '{ print $1 }')
+     else
+         echo "No valid TS found" >> $search-ts-energies.txt
+     fi
+     for i in $search*log;
+        do
+        freq=$(grep "Frequencies" -m1 $i |awk '{ print $3 }' )
+        freqint=${freq%.*}
+        if [[ $freqint -gt -200 ]]
+            then
+            energy=$(grep "Sum of electronic and thermal Free Energies" $i | awk '{ print $8 }')
+            echo "$i has an invalid negative frequency $freqint $energy" >> $search-ts-energies.txt
+        fi
+     done
 
 #if this is lowest energy guess_ts, then setup for conformational search, if this is final lowest TS move to lowest_ts
         if [[ $2 == 'ts_guess' ]]
@@ -28,7 +39,3 @@
             echo " " >> ../lowest_ts/$1-lowest_ts-energies.txt
             cat $search-ts-energies.txt >> ../lowest_ts/$1-lowest_ts-energies.txt
         fi
-    else
-         echo "No valid TS found" >> $search-ts-energies.txt
-fi
-
