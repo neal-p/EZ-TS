@@ -4,10 +4,12 @@
         do
         freq=$(grep "Frequencies" -m1 $i |awk '{ print $3 }' )
         freqint=${freq%.*}
+        energy=$(grep "Sum of electronic and thermal Free Energies" $i | awk '{ print $8 }')
         if [[ $freqint -lt -200 ]]
             then
-            energy=$(grep "Sum of electronic and thermal Free Energies" $i | awk '{ print $8 }')
             echo $i $energy >> $search-ts-energies.txt
+        else
+            echo "$i does not have a valid negative frequency $freqint $energy" >> $search-ts-energies.txt
         fi
      done
     if test -f "$search-ts-energies.txt"
