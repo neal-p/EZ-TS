@@ -7,3 +7,6 @@ optbasis="6-31G"
 #remeber force constants required for ts optimization
 optroute="empiricaldispersion=GD3bj opt=(ts,noeigen,calcfc) freq=noraman"
 opttime='1:00:00'
+
+
+#local workflow variables
