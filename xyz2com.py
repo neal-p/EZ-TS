@@ -25,6 +25,8 @@ Dict={
 if len(sys.argv) > 2:
     benchmark=sys.argv[2]
     benchmarkflag=benchmark.find('benchmark')
+else:
+    benchmarkflag= -1
 
 # Error exit if no input is given
 if len(sys.argv) <2:
