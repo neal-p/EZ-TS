@@ -2,14 +2,19 @@
 
 #Set up directories: conf_opt  conf_search  input  lowest_ts  ts_guess  utilities
 workdir=`pwd`
-mkdir utilities
-mkdir input
-mkdir ts_guess
-mkdir conf_search
-mkdir conf_opt
-mkdir lowest_ts
-
-mv *log input/
+if test -f input/ts_guess-list.txt
+    then
+    rm input/ts_guess-list.txt
+    sed -i '1,/#local workflow variables/!d' utilities/config.py
+else
+    mkdir utilities
+    mkdir input
+    mkdir ts_guess
+    mkdir conf_search
+    mkdir conf_opt
+    mkdir lowest_ts
+    mv *log input/
+fi
 
 for i in input/*log
     do
