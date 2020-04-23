@@ -22,8 +22,7 @@
         freqint=${freq%.*}
         if [[ $freqint -gt -200 ]]
             then
-            energy=$(grep "Sum of electronic and thermal Free Energies" $i | awk '{ print $8 }')
-            echo "$i has an invalid negative frequency $freqint $energy" >> $search-ts-energies.txt
+            echo "$i has an invalid negative frequency $freqint" >> $search-ts-energies.txt
         fi
      done
 
