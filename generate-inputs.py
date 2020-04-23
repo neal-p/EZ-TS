@@ -69,19 +69,19 @@ class Element:
              "CESIUM":"55","Cs":"55","55":"55","CS":"55",
              "BARIUM":"56","Ba":"56","56":"56","BA":"56",
              "LANTHANUM":"57","La":"57","57":"57","LA":"57",
-             "CERIUM":"58","Ce":"58","58":"58","CE":"58", 
+             "CERIUM":"58","Ce":"58","58":"58","CE":"58",
              "PRASEODYMIUM":"59","Pr":"59","59":"59","PR":"59",
-             "NEODYMIUM":"60","Nd":"60","60":"60","ND":"60", 
-             "PROMETHIUM":"61","Pm":"61","61":"61","PM":"61", 
+             "NEODYMIUM":"60","Nd":"60","60":"60","ND":"60",
+             "PROMETHIUM":"61","Pm":"61","61":"61","PM":"61",
              "SAMARIUM":"62","Sm":"62","62":"62","SM":"62",
-             "EUROPIUM":"63","Eu":"63","63":"63","EU":"63", 
-             "GADOLINIUM":"64","Gd":"64","64":"64","GD":"64", 
+             "EUROPIUM":"63","Eu":"63","63":"63","EU":"63",
+             "GADOLINIUM":"64","Gd":"64","64":"64","GD":"64",
              "TERBIUM":"65","Tb":"65","65":"65","TB":"65",
-             "DYSPROSIUM":"66","Dy":"66","66":"66","DY":"66", 
-             "HOLMIUM":"67","Ho":"67","67":"67","HO":"67", 
-             "ERBIUM":"68","Er":"68","68":"68","ER":"68", 
-             "THULIUM":"69","TM":"69","69":"69","TM":"69", 
-             "YTTERBIUM":"70","Yb":"70","70":"70","YB":"70", 
+             "DYSPROSIUM":"66","Dy":"66","66":"66","DY":"66",
+             "HOLMIUM":"67","Ho":"67","67":"67","HO":"67",
+             "ERBIUM":"68","Er":"68","68":"68","ER":"68",
+             "THULIUM":"69","TM":"69","69":"69","TM":"69",
+             "YTTERBIUM":"70","Yb":"70","70":"70","YB":"70",
              "LUTETIUM":"71","Lu":"71","71":"71","LU":"71",
              "HAFNIUM":"72","Hf":"72","72":"72","HF":"72",
              "TANTALUM":"73","Ta":"73","73":"73","TA":"73",
@@ -99,14 +99,14 @@ class Element:
              "ASTATINE":"85","At":"85","85":"85","AT":"85",
              "RADON":"86","Rn":"86","86":"86","RN":"86"}
 
-        FullName=["HYDROGEN", "HELIUM", "LITHIUM", "BERYLLIUM", "BORON", "CARBON", "NITROGEN", "OXYGEN", "FLUORINE", "NEON", 
-              "SODIUM", "MAGNESIUM", "ALUMINUM", "SILICON", "PHOSPHORUS", "SULFUR", "CHLORINE", "ARGON", "POTASSIUM", "CALCIUM", 
-              "SCANDIUM", "TITANIUM", "VANADIUM", "CHROMIUM", "MANGANESE", "IRON", "COBALT", "NICKEL", "COPPER", "ZINC", 
-              "GALLIUM", "GERMANIUM", "ARSENIC", "SELENIUM", "BROMINE", "KRYPTON", "RUBIDIUM", "STRONTIUM", "YTTRIUM", "ZIRCONIUM", 
-              "NIOBIUM", "MOLYBDENUM", "TECHNETIUM", "RUTHENIUM", "RHODIUM", "PALLADIUM", "SILVER", "CADMIUM", "INDIUM", "TIN", 
-              "ANTIMONY", "TELLURIUM", "IODINE", "XENON", "CESIUM", "BARIUM", "LANTHANUM", "CERIUM", "PRASEODYMIUM", "NEODYMIUM", 
-              "PROMETHIUM", "SAMARIUM", "EUROPIUM", "GADOLINIUM", "TERBIUM", "DYSPROSIUM", "HOLMIUM", "ERBIUM", "THULIUM", "YTTERBIUM", 
-              "LUTETIUM", "HAFNIUM", "TANTALUM", "TUNGSTEN", "RHENIUM", "OSMIUM", "IRIDIUM", "PLATINUM", "GOLD", "MERCURY", 
+        FullName=["HYDROGEN", "HELIUM", "LITHIUM", "BERYLLIUM", "BORON", "CARBON", "NITROGEN", "OXYGEN", "FLUORINE", "NEON",
+              "SODIUM", "MAGNESIUM", "ALUMINUM", "SILICON", "PHOSPHORUS", "SULFUR", "CHLORINE", "ARGON", "POTASSIUM", "CALCIUM",
+              "SCANDIUM", "TITANIUM", "VANADIUM", "CHROMIUM", "MANGANESE", "IRON", "COBALT", "NICKEL", "COPPER", "ZINC",
+              "GALLIUM", "GERMANIUM", "ARSENIC", "SELENIUM", "BROMINE", "KRYPTON", "RUBIDIUM", "STRONTIUM", "YTTRIUM", "ZIRCONIUM",
+              "NIOBIUM", "MOLYBDENUM", "TECHNETIUM", "RUTHENIUM", "RHODIUM", "PALLADIUM", "SILVER", "CADMIUM", "INDIUM", "TIN",
+              "ANTIMONY", "TELLURIUM", "IODINE", "XENON", "CESIUM", "BARIUM", "LANTHANUM", "CERIUM", "PRASEODYMIUM", "NEODYMIUM",
+              "PROMETHIUM", "SAMARIUM", "EUROPIUM", "GADOLINIUM", "TERBIUM", "DYSPROSIUM", "HOLMIUM", "ERBIUM", "THULIUM", "YTTERBIUM",
+              "LUTETIUM", "HAFNIUM", "TANTALUM", "TUNGSTEN", "RHENIUM", "OSMIUM", "IRIDIUM", "PLATINUM", "GOLD", "MERCURY",
               "THALLIUM", "LEAD", "BISMUTH", "POLONIUM", "ASTATINE", "RADON"]
 
         Symbol=[ "H","He","Li","Be","B","C","N","O","F","Ne",
@@ -425,8 +425,9 @@ fi
 """.format(title,optpartition,optcores,user,optmemory,opttime,conf_opt,conf_search,title,conf_search,title,conf_search,title,conf_opt,title,title,title,lowest_ts,title,title,title,title,title)
     return conf
 
-def Getlowest(title,conf_opt,utilities):
-    lowest="""#!/bin/bash
+def Getlowest(title,conf_opt,utilities,benchmark):
+    if benchmark == True:
+        lowest="""#!/bin/bash
 #SBATCH --job-name={0}
 #SBATCH --output=out.o
 #SBATCH --error=out.e
@@ -443,7 +444,28 @@ work={1}
 cd $work
 
 bash {2}/get-lowest.sh {3} conf_opt
+cd ../lowest_ts
+python3 ../utilities/xyz2com.py {4}*log benchmark
+""".format(title,conf_opt,utilities,title,title)
+
+    else:
+        lowest="""#!/bin/bash
+#SBATCH --job-name={0}
+#SBATCH --output=out.o
+#SBATCH --error=out.e
+#SBATCH --partition=debug
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --mail-type=END
+#SBATCH --mail-user=neal.pa@husky.neu.edu
+#SBATCH --mem=1G
+#SBATCH --time=10:00
+hostname
+work={1}
+cd $work
+bash {2}/get-lowest.sh {3} conf_opt
 """.format(title,conf_opt,utilities,title)
+
     return lowest
 
 def Maestro(c1,a1,a2,c2,title,xyz,conf_search,conf_opt):
@@ -655,14 +677,14 @@ def MoRot(file,ax,ang,index,optcores,optmemory,optmethod,optbasis,optroute,ts_gu
 
     origin_rot=[Deh(xyz,d1,c1,a1,a2),
                 Deh(xyz,d2,c2,a2,a1),
-       	       	Deh(xyz,c1,a1,a2,c2),
+                Deh(xyz,c1,a1,a2,c2),
                 Ang(xyz,c1,a1,a2),
-       	       	Ang(xyz,c2,a2,a1)]
+                Ang(xyz,c2,a2,a1)]
 
     target_rot=origin_rot.copy()
     shift_rot=[0,0,0,0,0]
 
-    if ang[0] != None: 
+    if ang[0] != None:
         a=float(ang[0])
         v1=xyz[a1]
         v2=xyz[c1]
@@ -670,7 +692,7 @@ def MoRot(file,ax,ang,index,optcores,optmemory,optmethod,optbasis,optroute,ts_gu
         target_rot[0]=a
         shift_rot[0]=rot
         xyz1=rotate(xyz,v1,v2,frag1,rot)
-       	ang1=Deh(xyz1,d1,c1,a1,a2)
+        ang1=Deh(xyz1,d1,c1,a1,a2)
         xyz2=rotate(xyz,v1,v2,frag1,-rot)
         ang2=Deh(xyz2,d1,c1,a1,a2)
 
@@ -681,32 +703,32 @@ def MoRot(file,ax,ang,index,optcores,optmemory,optmethod,optbasis,optroute,ts_gu
 
     if ang[1] != None:
         a=float(ang[1])
-       	v1=xyz[a2]
-       	v2=xyz[c2]
+        v1=xyz[a2]
+        v2=xyz[c2]
         rot=origin_rot[1]-a
-       	target_rot[1]=a
-       	shift_rot[1]=rot
+        target_rot[1]=a
+        shift_rot[1]=rot
         xyz1=rotate(xyz,v1,v2,frag2,rot)
         ang1=Deh(xyz1,d2,c2,a2,a1)
         xyz2=rotate(xyz,v1,v2,frag2,-rot)
-       	ang2=Deh(xyz2,d2,c2,a2,a1)
+        ang2=Deh(xyz2,d2,c2,a2,a1)
 
         if np.abs(np.abs(ang1)-np.abs(a)) < np.abs(np.abs(ang2)-np.abs(a)):
             xyz=xyz1
         else:
             xyz=xyz2
-            
+
     if ang[2] != None:
         a=float(ang[2])
-       	v1=xyz[a2]
-       	v2=xyz[a1]
+        v1=xyz[a2]
+        v2=xyz[a1]
         rot=origin_rot[2]-a
-       	target_rot[2]=a
-       	shift_rot[2]=rot
+        target_rot[2]=a
+        shift_rot[2]=rot
         xyz1=rotate(xyz,v1,v2,frag1,rot)
         ang1=Deh(xyz1,c1,a1,a2,c2)
         xyz2=rotate(xyz,v1,v2,frag1,-rot)
-       	ang2=Deh(xyz2,c1,a1,a2,c2)
+        ang2=Deh(xyz2,c1,a1,a2,c2)
 
         if np.abs(np.abs(ang1)-np.abs(a)) < np.abs(np.abs(ang2)-np.abs(a)):
             xyz=xyz1
@@ -722,12 +744,12 @@ def MoRot(file,ax,ang,index,optcores,optmemory,optmethod,optbasis,optroute,ts_gu
         v1=n1+xyz[a1]
         v2=xyz[a1]
         rot=origin_rot[3]-a
-       	target_rot[3]=a
+        target_rot[3]=a
         shift_rot[3]=rot
         xyz1=rotate(xyz,v1,v2,frag1,rot)
         ang1=Ang(xyz1,c1,a1,a2)
         xyz2=rotate(xyz,v1,v2,frag1,-rot)
-       	ang2=Ang(xyz2,c1,a1,a2)
+        ang2=Ang(xyz2,c1,a1,a2)
 
         if np.abs(np.abs(ang1)-np.abs(a)) < np.abs(np.abs(ang2)-np.abs(a)):
             xyz=xyz1
@@ -737,13 +759,13 @@ def MoRot(file,ax,ang,index,optcores,optmemory,optmethod,optbasis,optroute,ts_gu
     if ang[4] != None:
         a=float(ang[4])
         v1=xyz[c2]-xyz[a2]
-       	v2=xyz[a1]-xyz[a2]
+        v2=xyz[a1]-xyz[a2]
         n1=np.cross(v1,v2)
         n1=n1/la.norm(n1)
-       	v1=n1+xyz[a2]
+        v1=n1+xyz[a2]
         v2=xyz[a2]
         rot=origin_rot[4]-a
-       	target_rot[4]=a
+        target_rot[4]=a
         shift_rot[4]=rot
         xyz1=rotate(xyz,v1,v2,frag2,rot)
         ang1=Ang(xyz1,c2,a2,a1)
@@ -783,7 +805,7 @@ def MoRot(file,ax,ang,index,optcores,optmemory,optmethod,optbasis,optroute,ts_gu
 
     with open('rotation.out','a') as log:
         log.write(info)
-   
+
         return charge,multiplicity,c1,a1,a2,c2,title,xyz,out_coord
 
 def Printxyz(xyz,atoms,title,index,cores,memory,method,basis,optimization_route,charge,multiplicity,ts_guess):
@@ -861,8 +883,8 @@ def Readlist(list,opt_axis,opt_angles):
             if j != out_axis[n] and j != -1:
                 out_axis[n] = j
         for n,j in enumerate(inp_angles):
-       	    if j != out_angles[n] and j != None:
-       	       	out_angles[n] = j 
+            if j != out_angles[n] and j != None:
+                out_angles[n] = j
 
         jobs.append([file,out_axis,out_angles,name_index])
 
@@ -903,7 +925,7 @@ def main():
 
     If C1 or/and C2 are not given, MoRot will search the closet atom to A1 and A2
     If A2 is not given, A1 should be a element symbol instead of a position.
-    MoRot will find the closest two atoms of the given element as A1 and A2. 
+    MoRot will find the closest two atoms of the given element as A1 and A2.
     The default element is N. In this case, C1 and C2 will be ignored and automatically searched.
 
     In the list file, individule rotation angles can be set with
@@ -925,6 +947,8 @@ def main():
     parser.add_option('-l', dest='list',     type=str,   nargs=1, help='List of input coordinates file, will override -c option')
     parser.add_option('-a', dest='axis',     type=str,   nargs=1, help='List of axis atoms, should be quoted. Default is search two closest N atoms',default='A1 N')
     parser.add_option('-b', dest='angles',   type=str,   nargs=1, help='List of rotation angles, should be quoted. Default is no rotation',default='')
+    parser.add_option('--benchmark', dest='benchmark',  action="store_true", help='Generate DFT benchmarking input files')
+
 
     (options, args) = parser.parse_args()
 
@@ -933,11 +957,12 @@ def main():
     list=options.list
     axis=options.axis
     angles=options.angles
+    benchmark=options.benchmark
 
     if list == None and input == None:
         print('\n!!! Unkown coordinate file !!!\n')
         print(usage)
-       	print('\n!!! Unkown coordinate file !!!\n')
+        print('\n!!! Unkown coordinate file !!!\n')
         exit()
 
     axis=axis.upper().split()
@@ -966,11 +991,11 @@ def main():
             with open('{0}/{1}-coms.txt'.format(ts_guess,title),'w') as coms:
                 coms.write("{0}-rot-{1}.com\n".format(title,index))
             with open('{0}/{1}-lowest.sbatch'.format(lowest_ts,title),'w') as lowest:
-                lowest.write(Getlowest(title,conf_opt,utilities))
+                lowest.write(Getlowest(title,conf_opt,utilities,benchmark))
             with open('{0}/{1}-failed.sbatch'.format(ts_guess,title), 'w') as failed:
                 failed.write(Fixtsguess(title,user,ts_guess,conf_search,optroute,charge,multiplicity))
             with open('{0}/{1}-failed.sbatch'.format(conf_opt,title),'w') as failed:
-                failed.write(Fixconfopt(title,user,conf_opt,lowest_ts,optroute,charge,multiplicity)) 
+                failed.write(Fixconfopt(title,user,conf_opt,lowest_ts,optroute,charge,multiplicity))
         else:
             with open('{0}/{1}-coms.txt'.format(ts_guess,title),'a') as coms:
                 coms.write("{0}-rot-{1}.com\n".format(title,index))
@@ -986,8 +1011,8 @@ def main():
     with open('summary.xyz','w') as out:
         out.write(all)
 
-    
-  
+
+
 if __name__ == '__main__':
     main()
 
