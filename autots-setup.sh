@@ -6,6 +6,7 @@ if test -f input/ts_guess-list.txt
     then
     rm input/ts_guess-list.txt
     sed -i '1,/#local workflow variables/!d' utilities/config.py
+    find ./ -name "*energies.txt" -delete
 else
     mkdir utilities
     mkdir input
