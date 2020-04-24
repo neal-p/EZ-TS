@@ -84,7 +84,7 @@ def Sbatch(optpartition,optcores,user,optmemory,opttime,workdir,title):
 hostname
 work={6}
 cd $work
-input=$(sed "${{SLURM_ARRAY_TASK_ID}}q;d" {9}-coms.txt)
+input=$(sed "${{SLURM_ARRAY_TASK_ID}}q;d" {7}-coms.txt)
 export INPUT=$input
 export WORKDIR=$work
 export GAUSS_SCRDIR=$work
@@ -92,7 +92,7 @@ export g16root=/work/lopez/
 . $g16root/g16/bsd/g16.profile
 cd $WORKDIR
 $g16root/g16/g16 $INPUT
-""".format(title,optpartition,optcores,user,optmemory,opttime,workdir,title,title,title)
+""".format(title,optpartition,optcores,user,optmemory,opttime,workdir,title)
     return sbatch
 
 def Fixcbenchmarkopt(title,user,workdir,optroute,charge,multiplicity):
