@@ -449,7 +449,7 @@ obabel {4}*log -o xyz -O {5}.xyz
 python3 ../utilities/xyz2com.py {6}.xyz benchmark
 ID=$(sbatch --parsable {7}-submit.sbatch)
 sbatch --dependency=afternotok:$ID {8}-failed.sbatch
-""".format(title,conf_opt,utilities,title,title,title,title)
+""".format(title,conf_opt,utilities,title,title,title,title,title,title)
 
     else:
         lowest="""#!/bin/bash
