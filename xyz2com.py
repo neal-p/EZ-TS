@@ -39,7 +39,7 @@ if len(sys.argv) <2:
 
 #template definitions
 
-def generate_com(name,optcores,optmemory,optmethod,optbasis,optroute,charge,multiplicity,coord,benchmarkflag):
+def generate_com(name,optcores,optmemory,optmethod,optbasis,optroute,charge,multiplicity,coord,benchmarkflag,specialopts):
     coord='\n'.join(coord)
     if  benchmarkflag > -1:
         basisname=Dict[optbasis]
@@ -58,14 +58,14 @@ equillibrium database script
         script="""%chk={0}.chk
 %nprocs={1}
 %mem={2}GB
-# {3}/{4} {5}
+# {3}/{4} {5} {6}
 
 equillibrium database script
 
-{6} {7}
-{8}
+{7} {8}
+{9}
 
-""".format(name,optcores,optmemory,optmethod,optbasis,optroute,charge,multiplicity,coord)
+""".format(name,optcores,optmemory,optmethod,optbasis,optroute,specialopts,charge,multiplicity,coord)
     return script
 
 def Sbatch(optpartition,optcores,user,optmemory,opttime,workdir,title):
@@ -182,12 +182,12 @@ def writeinput(inputdir,basename,name,workdir,optcores,optmemory,optmethod,optba
     coord=coord[2:natom+2]
     if  benchmarkflag == 0:
         shll=open('{0}/{1}-{2}-{3}.com'.format(workdir,name,optmethod,Dict[optbasis]),'w')
-        shll.write(generate_com(name,optcores,optmemory,optmethod,optbasis,optroute,charge,multiplicity,coord,benchmarkflag))
+        shll.write(generate_com(name,optcores,optmemory,optmethod,optbasis,optroute,charge,multiplicity,coord,benchmarkflag,specialopts))
         shll.close()
         return(charge,multiplicity)
     else:
         shll=open('{0}/{1}.com'.format(workdir,name),'w')
-        shll.write(generate_com(name,optcores,optmemory,optmethod,optbasis,optroute,charge,multiplicity,coord,benchmarkflag))
+        shll.write(generate_com(name,optcores,optmemory,optmethod,optbasis,optroute,charge,multiplicity,coord,benchmarkflag,specialopts))
         shll.close()
 #Generation Steps
 if benchmarkflag == 0:
