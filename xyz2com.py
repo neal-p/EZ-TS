@@ -59,9 +59,12 @@ equillibrium database script
 %nprocs={1}
 %mem={2}GB
 # {3}/{4} {5}
+
 equillibrium database script
+
 {6} {7}
 {8}
+
 """.format(name,optcores,optmemory,optmethod,optbasis,optroute,charge,multiplicity,coord)
     return script
 
