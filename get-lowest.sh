@@ -4,6 +4,7 @@
         do
         freq=$(grep "Frequencies" -m1 $i |awk '{ print $3 }' )
         freqint=${freq%.*}
+        echo $freqint
         if [[ $freqint -lt -200 ]]
             then
             energy=$(grep "Sum of electronic and thermal Free Energies" $i | awk '{ print $8 }')
@@ -16,10 +17,13 @@
      else
          echo "No valid TS found" >> $search-ts-energies.txt
      fi
+     echo "additional conformers" >> $search-ts-energies.txt
+
      for i in $search*log;
         do
         freq=$(grep "Frequencies" -m1 $i |awk '{ print $3 }' )
         freqint=${freq%.*}
+        echo $freqint
         if [[ $freqint -gt -200 ]]
             then
             echo "$i has an invalid negative frequency $freqint" >> $search-ts-energies.txt
@@ -34,6 +38,7 @@
         elif [[ $2 == 'conf_opt' ]]
             then
             cp $lowestenergyts ../lowest_ts/
+            echo $lowestenergyts >> ../lowest_ts/$1-lowest_ts-energies.txt
             grep "Sum of electronic and thermal Free Energies" ../lowest_ts/$1*log >> ../lowest_ts/$1-lowest_ts-energies.txt
             echo " " >> ../lowest_ts/$1-lowest_ts-energies.txt
             cat $search-ts-energies.txt >> ../lowest_ts/$1-lowest_ts-energies.txt
