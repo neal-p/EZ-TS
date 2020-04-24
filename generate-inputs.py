@@ -445,8 +445,8 @@ cd $work
 
 bash {2}/get-lowest.sh {3} conf_opt
 cd ../lowest_ts
-obabel {4}*log -o xyz -O {5}
-python3 ../utilities/xyz2com.py {6} benchmark
+obabel {4}*log -o xyz -O {5}.xyz
+python3 ../utilities/xyz2com.py {6}.xyz benchmark
 """.format(title,conf_opt,utilities,title,title,title,title)
 
     else:
