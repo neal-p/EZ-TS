@@ -86,7 +86,7 @@ work={6}
 cd $work
 if [[ ${{SLURM_ARRAY_TASK_ID}} == 1 ]]
     then
-    for i in {7}*log; do echo $i >> {8}-coms.txt; done
+    for i in {7}*com; do echo $i >> {8}-coms.txt; done
 else
     sleep 30s
 fi
