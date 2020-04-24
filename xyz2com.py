@@ -84,12 +84,6 @@ def Sbatch(optpartition,optcores,user,optmemory,opttime,workdir,title):
 hostname
 work={6}
 cd $work
-if [[ ${{SLURM_ARRAY_TASK_ID}} == 1 ]]
-    then
-    for i in {7}*com; do echo $i >> {8}-coms.txt; done
-else
-    sleep 30s
-fi
 input=$(sed "${{SLURM_ARRAY_TASK_ID}}q;d" {9}-coms.txt)
 export INPUT=$input
 export WORKDIR=$work
