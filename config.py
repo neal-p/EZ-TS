@@ -3,7 +3,7 @@ optcores="7"
 optmemory="28" #GB
 optpartition="short,lopez"
 optmethod="b3lyp"
-optbasis="6-31G"
+optbasis="6-31G(d)"
 #remeber force constants required for ts optimization
 optroute="opt=(ts,noeigen,calcfc) freq=noraman"
 opttime='1:00:00'
