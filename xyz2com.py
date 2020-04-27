@@ -13,7 +13,7 @@ charge='unknown'
 multiplicity='unknown'
 
 Dict={
-    "6-31G":"pople",
+    "6-31G(d)":"pople",
     "6-31+G(d,p)":"pople-plusdp",
     "6-311+G(d,p)":"pople-tz",
     "cc-pvdz":"cc-pvdz",
