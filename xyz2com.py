@@ -43,15 +43,26 @@ def generate_com(name,optcores,optmemory,optmethod,optbasis,optroute,charge,mult
     coord='\n'.join(coord)
     if  benchmarkflag > -1:
         basisname=Dict[optbasis]
+        optroute=optroute.replace('freq=noraman','')
         script="""%chk={0}-{1}-{2}.chk
 %nprocs={3}
 %mem={4}GB
 # {5}/{6} {7} {8}
 
-equillibrium database script
+opt
 
 {9} {10}
 {11}
+
+--Link1--
+%chk={0}-{1}-{2}.chk
+%nprocs={3}
+%mem={4}GB
+# {5}/{6} {8} geom=check guess=read freq=noraman
+
+freq
+
+{9} {10}
 
 """.format(name,optmethod,basisname,optcores,optmemory,optmethod,optbasis,optroute,specialopts,charge,multiplicity,coord)
     else:
