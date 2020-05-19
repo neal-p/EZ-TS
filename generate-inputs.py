@@ -797,7 +797,11 @@ ORCAID=$(sbatch --parsable ../ORCA/{0}-ORCA.sbatch)
             missing.append(str(numbers[rank] + 1))
     missing = str(missing)[1:-1]
     include = missing.replace("'", "")
-
+    
+    C1=c1+1
+    C2=c2+1
+    A1=a1+1
+    A2=a2+1
     constraints = """$constrain
 angle: {0}, {1}, {2}, auto
 angle: {3}, {4}, {5}, auto
@@ -805,7 +809,7 @@ force constant=1.0
 reference={6}.ref
 $metadyn
 atoms: {7}
-$end""".format(c1, a1, a2, c2, a2, a1, title, include)
+$end""".format(C1, A1, A2, C2, A2, A1, title, include)
 
     with open('{0}/{1}.c'.format(CRESTdir, title), 'w') as constrain:
         constrain.write(constraints)
