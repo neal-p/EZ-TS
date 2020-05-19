@@ -785,8 +785,12 @@ sed -i "s/END/$nstruct/g" ../ORCA/*sbatch
 ORCAID=$(sbatch --parsable ../ORCA/{0}-ORCA.sbatch)
     """.format(title, CRESTpartition, CRESTcores, user, CRESTmem, CRESTtime, ts_guess,utilities,CRESTdir,CRESTmethod,conf_opt,tmptitle)
 
+    C1=c1+1
+    C2=c2+1
+    A1=a1+1
+    A2=a2+1
     missing=[]
-    numbers=[c1, a1, a2, c2]
+    numbers=[C1, A1, A2, C2]
     numbers.sort()
     numbers.insert(0, 0)  # add the minimum value on begining of the list
     numbers.append(natom + 1)  # add the maximum value at the end of the list
@@ -798,10 +802,6 @@ ORCAID=$(sbatch --parsable ../ORCA/{0}-ORCA.sbatch)
     missing = str(missing)[1:-1]
     include = missing.replace("'", "")
     
-    C1=c1+1
-    C2=c2+1
-    A1=a1+1
-    A2=a2+1
     constraints = """$constrain
 angle: {0}, {1}, {2}, auto
 angle: {3}, {4}, {5}, auto
