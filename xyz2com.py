@@ -183,7 +183,7 @@ else
     nresub=0
 fi
 nresub=$((nresub+=1))
-if [[ $nresub -lt 2 ]]
+if [[ $nresub -lt 3 ]]
     then
     rm {0}-tier{3}-resubmit.txt
     echo $nresub >> {0}-tier{3}-resubmit.txt
