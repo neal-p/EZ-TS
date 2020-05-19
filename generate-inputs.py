@@ -809,7 +809,7 @@ force constant=1.0
 reference={6}.ref
 $metadyn
 atoms: {7}
-$end""".format(C1, A1, A2, C2, A2, A1, title, include)
+$end""".format(C1, A1, A2, C2, A2, A1, tmptitle, include)
 
     with open('{0}/{1}.c'.format(CRESTdir, title), 'w') as constrain:
         constrain.write(constraints)
