@@ -1,6 +1,7 @@
 from config import *
 import os
 import sys
+import numpy as np
 
 # Input Parameters
 
@@ -8,7 +9,14 @@ name=sys.argv[1].split('.')[0]
 workdir=os.getcwd()
 ext='com'
 os.chdir(workdir)
-basename=name.split('-conf')[0]
+confstring=name.find('-conf')
+rotstring=name.find('-rot')
+if confstring > -1:
+    basename=name.split('-conf')[0]
+elif rotstring > -1:
+    basename=name.split('-rot')[0]
+else:
+    basename=name
 charge='unknown'
 multiplicity='unknown'
 
@@ -39,12 +47,42 @@ if len(sys.argv) <2:
 
 #template definitions
 
-def generate_com(name,optcores,optmemory,optmethod,optbasis,optroute,charge,multiplicity,coord,benchmarkflag,specialopts):
+def generate_com(basislist,tier,name,optcores,optmemory,optmethod,optbasis,optroute,charge,multiplicity,coord,benchmarkflag,specialopts):
     coord='\n'.join(coord)
     if  benchmarkflag > -1:
         basisname=Dict[optbasis]
+        with open('{0}-tier{1}.txt'.format(name,tier),'a') as coms:
+            coms.write('{0}-{1}-{2}-tier{3}.com\n'.format(name,optmethod,basisname,tier))
         optroute=optroute.replace('freq=noraman','')
-        script="""%chk={0}-{1}-{2}.chk
+        optcores=optcores[tier]
+        optmemory=optmemory[tier]
+        if tier > 0:
+            prev=tier-1
+            optroute='opt=(readfc,ts,noeigen)'
+            oldchk='{0}-{1}-{2}'.format(name,optmethod,Dict[basislist[tier-1]])
+            script="""%oldchk={0}-tier{13}.chk
+%chk={1}-{2}-{3}-tier{12}.chk
+%nprocs={4}
+%mem={5}GB
+# {6}/{7} {8} {9} geom=check guess=read
+
+opt
+
+{10} {11}
+
+--Link1--
+%chk={1}-{2}-{3}-tier{12}.chk
+%nprocs={4}
+%mem={5}GB
+# {6}/{7} {9} geom=check guess=read freq=noraman
+
+freq
+
+{10} {11}
+
+""".format(oldchk,name,optmethod,basisname,optcores,optmemory,optmethod,optbasis,optroute,specialopts,charge,multiplicity,tier,prev)
+        else:
+            script="""%chk={0}-{1}-{2}-tier{12}.chk
 %nprocs={3}
 %mem={4}GB
 # {5}/{6} {7} {8}
@@ -55,7 +93,7 @@ opt
 {11}
 
 --Link1--
-%chk={0}-{1}-{2}.chk
+%chk={0}-{1}-{2}-tier{12}.chk
 %nprocs={3}
 %mem={4}GB
 # {5}/{6} {8} geom=check guess=read freq=noraman
@@ -64,7 +102,7 @@ freq
 
 {9} {10}
 
-""".format(name,optmethod,basisname,optcores,optmemory,optmethod,optbasis,optroute,specialopts,charge,multiplicity,coord)
+""".format(name,optmethod,basisname,optcores,optmemory,optmethod,optbasis,optroute,specialopts,charge,multiplicity,coord,tier)
     else:
         script="""%chk={0}.chk
 %nprocs={1}
@@ -79,9 +117,10 @@ equillibrium database script
 """.format(name,optcores,optmemory,optmethod,optbasis,optroute,specialopts,charge,multiplicity,coord)
     return script
 
-def Sbatch(optpartition,optcores,user,optmemory,opttime,workdir,title):
+def Sbatch(total,p,optpartition,optcores,user,optmemory,opttime,workdir,title):
+    next=p+1
     sbatch="""#!/bin/bash
-#SBATCH --job-name={0}
+#SBATCH --job-name={0}-tier{8}
 #SBATCH --output=out.o
 #SBATCH --error=out.e
 #SBATCH --partition={1}
@@ -91,11 +130,24 @@ def Sbatch(optpartition,optcores,user,optmemory,opttime,workdir,title):
 #SBATCH --mail-user={3}
 #SBATCH --mem={4}G
 #SBATCH --time={5}
-#SBATCH --array=1-210%20
+#SBATCH --array=1-{10}%20
 hostname
 work={6}
 cd $work
-input=$(sed "${{SLURM_ARRAY_TASK_ID}}q;d" {7}-coms.txt)
+
+if [[ $SLURM_ARRAY_TASK_ID == 1 ]]
+    then
+    time=$(date)
+    echo "$SLURM_JOB_NAME $time" >> ../status.txt
+
+    ID=$SLURM_ARRAY_JOB_ID
+    if test -f {0}-tier{9}.sbatch
+        then
+        sbatch --dependency=afterok:$ID {0}-tier{9}.sbatch
+            fi
+    sbatch --dependency=afternotok:$ID {0}-tier{8}-failed.sbatch
+fi
+input=$(sed "${{SLURM_ARRAY_TASK_ID}}q;d" {7}-tier{8}.txt)
 export INPUT=$input
 export WORKDIR=$work
 export GAUSS_SCRDIR=$work
@@ -103,70 +155,180 @@ export g16root=/work/lopez/
 . $g16root/g16/bsd/g16.profile
 cd $WORKDIR
 $g16root/g16/g16 $INPUT
-""".format(title,optpartition,optcores,user,optmemory,opttime,workdir,title)
+""".format(title,optpartition,optcores,user,optmemory,opttime,workdir,title,p,next,total)
     return sbatch
 
-def Fixcbenchmarkopt(title,user,workdir,optroute,charge,multiplicity):
-    batch="""#!/bin/bash
-#SBATCH --job-name={0}
+def Fixcbenchmarkopt(p,title,user,workdir,optroute,charge,multiplicity):
+    next=p+1
+    batch=r"""#!/bin/bash
+#SBATCH --job-name={0}-failedbench
 #SBATCH --output=resubmit.o
 #SBATCH --error=resubmit.e
 #SBATCH --partition=debug
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --mail-type=END
-#SBATCH --mail-user={1}
 #SBATCH --mem=1G
 #SBATCH --time=00:20:00
 hostname
+
 work={2}
 cd $work
+echo $SLURM_JOB_NAME >> ../status.txt
 touch failed-script-ran
-if test -f {3}-resubmit.txt
+
+if test -f {0}-tier{3}-resubmit.txt
     then
-    nresub=$(sed "1q;d" {4}-resubmit.txt)
+    nresub=$(sed "1q;d" {0}-tier{3}-resubmit.txt)
 else
     nresub=0
 fi
 nresub=$((nresub+=1))
 if [[ $nresub -lt 2 ]]
     then
-    rm {5}-resubmit.txt
-    echo $nresub >> {6}-resubmit.txt
-    for i in {7}*log
+    rm {0}-tier{3}-resubmit.txt
+    echo $nresub >> {0}-tier{3}-resubmit.txt
+    for i in {0}*tier{3}.log
         do
-        finished=$(tail $i | grep 'Normal termination' -c )
-        if [[ $finished -lt 1 ]]
+        echo "READING FILE $i" >>{0}-resublog.txt
+        finished=$(grep 'Station' -c $i)
+        if [[ $finished -lt 2 ]]
             then
-            maxiter=$(grep "Number of steps exceeded" $i)
-            if [[ $maxiter -gt 0 ]]
+            convert=$(obabel $i -o xyz)
+            if [[ $convert == *"0 molecules converted"* ]]
                 then
-                sed -i '1,/{8} {9}/!d' ${{i%.*}}.com
-                obabel $i -o xyz |tail -n +3 >> ${{i%.*}}.com
+                echo "${{i%.*}} did not reach restart point, or failed terribly" >> {0}-resublog.txt
+                old=$(grep "%oldchk=" -c ${{i%.*}}.com)
+                sed -i '1,/{4} {5}/!d' ${{i%.*}}.com
                 echo " " >> ${{i%.*}}.com
-                echo ${{i%.*}}.com >> {10}-resubmit.txt
+                if [[ $old -gt 0 ]]
+                    then
+                    sed -i 1d ${{i%.*}}.com
+                fi
+                sed -i 's/geom=check guess=read//g' ${{i%.*}}.com
+                sed -i 's/opt=(readfc,ts,noeigen)/opt=(calcfc,ts,noeigen)/g' ${{i%.*}}.com 
+                tail -n +3 {0}.xyz >> ${{i%.*}}.com 
+                echo " " >>  ${{i%.*}}.com
+                echo '--Link1--' >>  ${{i%.*}}.com
+                top=$(head -n 8 ${{i%.*}}.com)
+                echo -ne "${{top/opt=(calcfc,ts,noeigen)/freq=noraman geom=check guess=read}}" >> ${{i%.*}}.com
+                echo " " >>  ${{i%.*}}.com
             else
-                sed -i '1,/{11} {12}/!d' ${{i%.*}}.com
-                obabel $i -o xyz |tail -n +3 >> ${{i%.*}}.com
+
+            sed -i '1,/{4} {5}/!d' ${{i%.*}}.com
+            termination=$(grep "Normal termination" -c $i)
+            cycles=$(grep "SCF Done" -c $i)
+            check=$(grep "geom=check guess=read" -c ${{i%.*}}.com)
+            
+            old=$(grep "%oldchk=" -c ${{i%.*}}.com)
+
+            #Non stationary point found
+                 #read in fc
+            if [[ $finished -eq 1 ]] && [[ $termination -ge 2 ]]
+                then
+                echo "${{i%.*}} finished with non-stationary point, reading previous fc" >> {0}-resublog.txt
+                echo " " ${{i%.*}}.com
+                if [[ $old -gt 0 ]]
+                    then
+                    sed -i 1d ${{i%.*}}.com
+                fi
+                sed -i 's/geom=check guess=read//g' ${{i%.*}}.com
+                mv ${{i%.*}}.chk ${{i%.*}}-readingfc.chk
+                echo " " >>  ${{i%.*}}.com
+                echo '--Link1--' >>  ${{i%.*}}.com
+                sed -i 's/opt=(calcfc,ts,noeigen)/opt=(readfc,ts,noeigen)/g' ${{i%.*}}.com
+                top=$(head -n 8 ${{i%.*}}.com)
+                echo -ne "${{top/opt=(readfc,ts,noeigen)/freq=noraman geom=check guess=read}}" >> ${{i%.*}}.com
+                sed -i 's/opt=(readfc,ts,noeigen)/opt=(readfc,ts,noeigen) geom=check guess=read/g' ${{i%.*}}.com
+                sed -i "1s/^/%oldchk=${{i%.*}}-readingfc.chk\n/" ${{i%.*}}.com
+                echo " " >>${{i%.*}}.com
+ 
+             #stationary found, but didnt finish frequencies or far from starting geometry
+                 #re-calculate force constants
+             elif ([[ $finished -eq 1 ]] && [[ $termination -lt 2 ]]) || ([[ $cycles -gt 15 ]])
+                then
+                echo "${{i%.*}} didnt finish freq, or is far from starting geometry" >> {0}-resublog.txt
+                if [[ $old -gt 0 ]]
+                    then
+                    sed -i 1d ${{i%.*}}.com
+                fi
+                obabel $i -o xyz | tail -n +3 >> ${{i%.*}}.com
+                sed -i 's/geom=check guess=read//g' ${{i%.*}}.com
+                sed -i 's/opt=(readfc,ts,noeigen)/opt=(calcfc,ts,noeigen)/g' ${{i%.*}}.com
                 echo " " >> ${{i%.*}}.com
-                echo ${{i%.*}}.com >> {13}-resubmit.txt
+                echo '--Link1--' >>  ${{i%.*}}.com
+                top=$(head -n 8 ${{i%.*}}.com)
+                echo -ne "${{top/opt=(calcfc,ts,noeigen)/freq=noraman geom=check guess=read}}" >> ${{i%.*}}.com
+                echo " " >>${{i%.*}}.com
+
+             #no stationary point found yet
+             else
+                
+                fc=$(grep "Converged?" -c $i)
+  
+                #if force constants were finished computing, read them
+                if [[ $fc -gt 0 ]]
+                    then
+                    echo "${{i%.*}} no stationary point found, reading fc" >> {0}-resublog.txt
+                    if [[ $old -gt 0 ]]
+                        then
+                        sed -i 1d ${{i%.*}}.com
+                    fi
+                    sed -i 's/geom=check guess=read//g' ${{i%.*}}.com
+                    mv ${{i%.*}}.chk ${{i%.*}}-readingfc.chk
+                    sed -i 's/opt=(calcfc,ts,noeigen)/opt=(readfc,ts,noeigen)/g' ${{i%.*}}.com
+                    echo " " >> ${{i%.*}}.com
+                    echo '--Link1--' >>  ${{i%.*}}.com
+                    top=$(head -n 8 ${{i%.*}}.com)
+                    echo -ne "${{top/opt=(readfc,ts,noeigen)/freq=noraman geom=check guess=read}}" >> ${{i%.*}}.com
+                    sed -i 's/opt=(readfc,ts,noeigen)/opt=(readfc,ts,noeigen) geom=check guess=read/g' ${{i%.*}}.com
+                    sed -i "1s/^/%oldchk=${{i%.*}}-readingfc.chk\n/" ${{i%.*}}.com
+                    echo " " >>${{i%.*}}.com 
+
+                 #if not, take geometry and restart
+                 else
+                    echo "${{i%.*}} no stationary point found, nor fc, starting again" >> {0}-resublog.txt
+                    obabel $i -o xyz |tail -n +3 >> ${{i%.*}}.com
+                    if [[ $old -gt 0 ]]
+                        then
+                        sed -i 1d ${{i%.*}}.com
+                    fi
+                    sed -i 's/geom=check guess=read//g' ${{i%.*}}.com
+                    sed -i 's/opt=(readfc,ts,noeigen)/opt=(calcfc,ts,noeigen)/g' ${{i%.*}}.com 
+                    echo " " >>${{i%.*}}.com
+                    echo '--Link1--' >>  ${{i%.*}}.com
+                    top=$(head -n 8 ${{i%.*}}.com)
+                    echo -ne "${{top/opt=(calcfc,ts,noeigen)/freq=noraman geom=check guess=read}}" >> ${{i%.*}}.com
+                    echo " " >>${{i%.*}}.com
+
+                fi
             fi
-        fi
+            fi
+        echo ${{i%.*}}.com >> {0}-tier{3}-resubmit.txt
+    echo " " >> ${{i%.*}}.com
+    else
+        echo "$i is done" >> {0}-resublog.txt
+    fi
+    
     done
-    toresub=$(cat {14}-resubmit.txt |wc -l)
-    currentarray=$(sed "12q;d" {15}-submit.sbatch)
-    sed -i "s/$currentarray/#SBATCH --array=2-$toresub/g" {16}-submit.sbatch
-    sed -i "s/{17}-coms.txt/{18}-resubmit.txt/g" {19}-submit.sbatch
-    ID=$(sbatch --parsable {20}-submit.sbatch)
-    sbatch --dependency=afterok:$ID  {21}/{22}-lowest.sbatch
-    sbatch --dependency=afternotok:$ID {23}-failed.sbatch
+
+    toresub=$(cat {0}-tier{3}-resubmit.txt |wc -l)
+    currentarray=$(sed "12q;d" {0}-tier{3}.sbatch)
+    sed -i "s/$currentarray/#SBATCH --array=2-$toresub/g" {0}-tier{3}.sbatch
+    sed -i "s/{0}-tier{3}.txt/{0}-tier{3}-resubmit.txt/g" {0}-tier{3}.sbatch
+    ID=$(sbatch --parsable {0}-tier{3}.sbatch)
+    sbatch --dependency=afternotok:$ID {0}-tier{3}-failed.sbatch
+
+    if test -f {0}-tier{6}.sbatch
+        then
+        sbatch --dependency=afterok:$ID {0}-tier{6}.sbatch
+    fi
 fi
-""".format(title,user,workdir,title,title,title,title,title,charge, multiplicity,title,charge, multiplicity,title,title,title,title,title,title,title,title,workdir,title,title)
+""".format(title,user,workdir,p,charge,multiplicity,next)
     return batch
 
 
 #take xyz and make com
-def writeinput(inputdir,basename,name,workdir,optcores,optmemory,optmethod,optbasis,optroute,specialopts,x,charge,multiplicity,benchmarkflag,user):
+def writeinput(basislist,tier,inputdir,basename,name,workdir,optcores,optmemory,optmethod,optbasis,optroute,specialopts,x,charge,multiplicity,benchmarkflag,user):
     if x ==0:
         with open('{0}/{1}.log'.format(inputdir,basename)) as logfile:
             log=logfile.read().splitlines()
@@ -174,34 +336,58 @@ def writeinput(inputdir,basename,name,workdir,optcores,optmemory,optmethod,optba
             if 'Multiplicity =' in line:
                 charge=line.split()[2]
                 multiplicity=line.split()[5]
-        if benchmarkflag == 0:
-           sbatch=open('{0}/{1}-submit.sbatch'.format(workdir,name),'w')
-           sbatch.write(Sbatch(optpartition,optcores,user,optmemory,opttime,workdir,name))
-           sbatch.close()
-           failed=open('{0}/{1}-failed.sbatch'.format(workdir,name),'w')
-           failed.write(Fixcbenchmarkopt(name,user,workdir,optroute,charge,multiplicity))
-           failed.close()
-
     coord=open('{0}.xyz'.format(name), 'r').read().splitlines()
     natom=int(coord[0])
     coord=coord[2:natom+2]
     if  benchmarkflag == 0:
-        shll=open('{0}/{1}-{2}-{3}.com'.format(workdir,name,optmethod,Dict[optbasis]),'w')
-        shll.write(generate_com(name,optcores,optmemory,optmethod,optbasis,optroute,charge,multiplicity,coord,benchmarkflag,specialopts))
-        shll.close()
+        with open('{0}/{1}-{2}-{3}-tier{4}.com'.format(workdir,name,optmethod,Dict[optbasis],tier),'w') as shll:
+            shll.write(generate_com(basislist,tier,name,optcores,optmemory,optmethod,optbasis,optroute,charge,multiplicity,coord,benchmarkflag,specialopts))
         return(charge,multiplicity)
     else:
         shll=open('{0}/{1}.com'.format(workdir,name),'w')
-        shll.write(generate_com(name,optcores,optmemory,optmethod,optbasis,optroute,charge,multiplicity,coord,benchmarkflag,specialopts))
+        shll.write(generate_com(basislist,tier,name,optcores,optmemory,optmethod,optbasis,optroute,charge,multiplicity,coord,benchmarkflag,specialopts))
         shll.close()
 #Generation Steps
 if benchmarkflag == 0:
     for x,n in enumerate(benchmarkmethods):
-        for m in benchmarkbasis:
-            optmethod=n
-            optbasis=m
-            specialopts=benchmarkspecialopts[x]
-            charge,multiplicity=writeinput(inputdir,basename,name,workdir,optcores,optmemory,optmethod,optbasis,optroute,specialopts,x,charge,multiplicity,benchmarkflag,user)
+        for y,m in enumerate(benchmarkbasis):
+            for z,o in enumerate(benchmarkbasis[y]):
+                optmethod=n
+                optbasis=o
+                specialopts=benchmarkspecialopts[x]
+                charge,multiplicity=writeinput(benchmarkbasis[y],z,inputdir,basename,name,workdir,optcores,optmemory,optmethod,optbasis,optroute,specialopts,x,charge,multiplicity,benchmarkflag,user)
+    tiers=np.zeros(7)
+    for n,m in enumerate(benchmarkbasis):
+        count=len(benchmarkbasis[n])
+        tiers[0]=tiers[0]+1
+        if count > 1:
+            tiers[1]=tiers[1]+1
+        if count > 2:
+            tiers[2]=tiers[2]+1
+        if count > 3:
+            tiers[3]=tiers[3]+1
+        if count > 4:
+            tiers[4]=tiers[4]+1
+        if count > 5:
+            tiers[5]=tiers[5]+1
+        if count > 6:
+            tiers[6]=tiers[6]+1
+        if count > 7:
+            tiers[7]=tiers[7]+1
+
+    for p,l in enumerate(tiers):
+        if l > 0:
+            total=int(len(benchmarkmethods)*l)
+            with open('{0}/{1}-tier{2}.sbatch'.format(workdir,name,p),'w') as sbatch:
+                sbatch.write(Sbatch(total,p,optpartition,optcores[p],user,optmemory[p],opttime,workdir,name))
+            with open('{0}/{1}-tier{2}-failed.sbatch'.format(workdir,name,p),'w') as failed:
+                failed.write(Fixcbenchmarkopt(p,name,user,workdir,optroute,charge,multiplicity))
+       
 else:
     x=0
-    writeinput(inputdir,basename,name,workdir,optcores,optmemory,optmethod,optbasis,optroute,specialopts,x,charge,multiplicity,benchmarkflag,user)
+    tier=False
+    basislist=False 
+    writeinput(basislist,tier,inputdir,basename,name,workdir,optcores[0],optmemory[0],optmethod,optbasis,optroute,specialopts,x,charge,multiplicity,benchmarkflag,user)
+
+    
+

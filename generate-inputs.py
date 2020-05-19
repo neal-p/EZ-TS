@@ -3,6 +3,7 @@ import os,sys
 import numpy as np
 from numpy import linalg as la
 from optparse import OptionParser
+import shutil
 
 class Element:
     ## This class is periodic table
@@ -176,178 +177,10 @@ class Element:
     def getCovR(self):
         return self.__CovR
 
-def Fixconfopt(title,user,conf_opt,lowest_ts,optroute,charge,multiplicity):
-    batch="""#!/bin/bash
-#SBATCH --job-name={0}
-#SBATCH --output=resubmit.o
-#SBATCH --error=resubmit.e
-#SBATCH --partition=debug
-#SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --mail-type=END
-#SBATCH --mail-user={1}
-#SBATCH --mem=1G
-#SBATCH --time=00:20:00
-hostname
-
-work={2}
-cd $work
-touch failed-script-ran
-
-if test -f {3}-resubmit.txt
-    then
-    nresub=$(sed "1q;d" {4}-resubmit.txt)
-else
-    nresub=0
-fi
-nresub=$((nresub+=1))
-if [[ $nresub -lt 2 ]]
-    then
-    rm {5}-resubmit.txt
-    echo $nresub >> {6}-resubmit.txt
-    for i in {7}*log
-        do
-        finished=$(tail $i | grep 'Normal termination' -c )
-        if [[ $finished -lt 1 ]]
-            then
-            maxiter=$(grep "Number of steps exceeded" $i)
-            if [[ $maxiter -gt 0 ]]
-                then
-                sed -i '1,/{8} {9}/!d' ${{i%.*}}.com
-                obabel $i -o xyz |tail -n +3 >> ${{i%.*}}.com
-                echo " " >> ${{i%.*}}.com
-                echo ${{i%.*}}.com >> {10}-resubmit.txt
-            else
-                sed -i '1,/{11} {12}/!d' ${{i%.*}}.com
-                obabel $i -o xyz |tail -n +3 >> ${{i%.*}}.com
-                echo " " >> ${{i%.*}}.com
-                echo ${{i%.*}}.com >> {13}-resubmit.txt
-
-            fi
-        fi
-    done
-    toresub=$(cat {14}-resubmit.txt |wc -l)
-    currentarray=$(sed "12q;d" {15}-submit.sbatch)
-    sed -i "s/$currentarray/#SBATCH --array=2-$toresub/g" {16}-submit.sbatch
-    sed -i "s/{17}-coms.txt/{18}-resubmit.txt/g" {19}-submit.sbatch
-    ID=$(sbatch --parsable {20}-submit.sbatch)
-    sbatch --dependency=afterok:$ID  {21}/{22}-lowest.sbatch
-    sbatch --dependency=afternotok:$ID {23}-failed.sbatch
-fi
-""".format(title,user,conf_opt,title,title,title,title,title,charge, multiplicity,title,charge, multiplicity,title,title,title,title,title,title,title,title,lowest_ts,title,title)
-    return batch
-
-def Fixtsguess(title,user,ts_guess,conf_search,optroute,charge,multiplicity):
-    batch="""#!/bin/bash
-#SBATCH --job-name={0}
-#SBATCH --output=resubmit.o
-#SBATCH --error=resubmit.e
-#SBATCH --partition=debug
-#SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --mail-type=END
-#SBATCH --mail-user={1}
-#SBATCH --mem=1G
-#SBATCH --time=00:20:00
-hostname
-
-work={2}
-cd $work
-touch failed-script-ran
-
-if test -f {3}-resubmit.txt
-    then
-    nresub=$(sed "1q;d" {4}-resubmit.txt)
-else
-    nresub=0
-fi
-nresub=$((nresub+=1))
-if [[ $nresub -lt 2 ]]
-    then
-    rm {5}-resubmit.txt
-    echo $nresub >> {6}-resubmit.txt
-    for i in {7}*log
-        do
-        finished=$(tail $i | grep 'Normal termination' -c )
-        if [[ $finished -lt 1 ]]
-            then
-            maxiter=$(grep "Number of steps exceeded" $i)
-            if [[ $maxiter -gt 0 ]]
-                then
-                sed -i '1,/{7} {9}/!d' ${{i%.*}}.com
-                obabel $i -o xyz |tail -n +3 >> ${{i%.*}}.com
-                echo " " >> ${{i%.*}}.com
-                echo ${{i%.*}}.com >> {10}-resubmit.txt
-            else
-                sed -i '1,/{11} {12}/!d' ${{i%.*}}.com
-                obabel $i -o xyz |tail -n +3 >> ${{i%.*}}.com
-                echo " " >> ${{i%.*}}.com
-                echo ${{i%.*}}.com >> {13}-resubmit.txt
-
-            fi
-        fi
-    done
-    toresub=$(cat {14}-resubmit.txt |wc -l)
-    currentarray=$(sed "12q;d" {15}-submit.sbatch)
-    sed -i "s/$currentarray/#SBATCH --array=2-$toresub/g" {16}-submit.sbatch
-    sed -i "s/{17}-coms.txt/{18}-resubmit.txt/g" {19}-submit.sbatch
-    ID=$(sbatch --parsable {20}-submit.sbatch)
-    sbatch --dependency=afterok:$ID  {21}/{22}-conf_search.sbatch
-    sbatch --dependency=afternotok:$ID {23}-failed.sbatch
-
-elif [[ $nresub == 2 ]]
-    then
-    touch freqonly
-    rm {24}-resubmit.txt
-    echo $nresub >> {25}-resubmit.txt
-    for i in {26}*log
-        do
-        finished=$(tail $i | grep 'Normal termination' -c )
-        if [[ $finished -lt 1 ]]
-            then
-            sed -i '1,/{27} {28}/!d' ${{i%.*}}.com
-            obabel $i -o xyz |tail -n +3 >> ${{i%.*}}.com
-            echo " " >> ${{i%.*}}.com
-            echo ${{i%.*}}.com >> {29}-resubmit.txt
-            sed -i 's/{30}/freq=noraman/g' ${{i%.*}}.com
-        fi
-    done
-    toresub=$(cat {31}-resubmit.txt |wc -l)
-    currentarray=$(sed "12q;d" {32}-submit.sbatch)
-    sed -i "s/$currentarray/#SBATCH --array=2-$toresub/g" {33}-submit.sbatch
-    sed -i "s/{34}-coms.txt/resubmit.txt/g" {35}-submit.sbatch
-    ID=$(sbatch --parsable {36}-submit.sbatch)
-    sbatch --dependency=afterok:$ID {37}/{38}-conf_search.sbatch
-    sbatch --dependency=afternotok:$ID {39}-failed.sbatch
-fi
-""".format(title,user,ts_guess,title,title,title,title,title,charge, multiplicity,title,charge, multiplicity,title,title,title,title,title,title,title,title,conf_search,title,title,title,title,title,charge,multiplicity,title,optroute,title,title,title,title,title,title,conf_search,title,title)
-    return batch
-
-def SchrodingerBatch(title,ts_guess,user,utilities,c1,a1,a2,c2,conf_search):
-    batch="""#!/bin/bash
-#SBATCH --job-name={0}
-#SBATCH --output=out.o
-#SBATCH --error=out.e
-#SBATCH --partition=debug
-#SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --mail-type=END
-#SBATCH --mail-user={1}
-#SBATCH --mem=1G
-#SBATCH --time=10:00
-hostname
-
-work={2}
-cd $work
-bash {3}/get-lowest.sh {4} ts_guess {5} {6} {7} {8} {9}
-
-../conf_search/{10}.sh
-""".format(title,user,ts_guess,utilities,title,c1,a1,a2,c2,conf_search,title)
-    return batch
-
-def Sbatch(optpartition,optcores,user,optmemory,opttime,njobs,ts_guess,title):
+#Initial ts_guess Input
+def Sbatch_tsguess(optpartition,optcores,user,optmemory,opttime,njobs,ts_guess,title):
     sbatch="""#!/bin/bash
-#SBATCH --job-name={0}
+#SBATCH --job-name={0}-tsguess
 #SBATCH --output=out.o
 #SBATCH --error=out.e
 #SBATCH --partition={1}
@@ -363,7 +196,18 @@ hostname
 work={6}
 cd $work
 
-input=$(sed "${{SLURM_ARRAY_TASK_ID}}q;d" {7}-coms.txt)
+if [[ $SLURM_ARRAY_TASK_ID == 1 ]]
+    then
+    sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID ../conf_search/{0}/CREST/{0}-CREST.sbatch
+    sbatch --dependency=afternotok:$SLURM_ARRAY_JOB_ID {0}-failed.sbatch
+    time=$(date)
+    echo "$SLURM_JOB_NAME $time" >> ../status.txt
+    echo "$SLURM_JOB_NAME autots started in $work" >> /scratch/neal.pa/autots-runlog/{0}
+else
+    sleep 60s
+fi
+
+input=$(sed "${{SLURM_ARRAY_TASK_ID}}q;d" {0}-coms.txt)
 export INPUT=$input
 export WORKDIR=$work
 export GAUSS_SCRDIR=$work
@@ -372,125 +216,95 @@ export g16root=/work/lopez/
 
 cd $WORKDIR
 $g16root/g16/g16 $INPUT
-""".format(title,optpartition,optcores,user,optmemory,opttime,ts_guess,title)
+""".format(title,optpartition,optcores[0],user,optmemory[0],opttime,ts_guess)
     return sbatch
 
-def Conf(title,optpartition,optcores,user,optmemory,opttime,conf_opt,conf_search,lowest_ts):
-    conf="""#!/bin/bash
-#SBATCH --job-name={0}-conf-opt
-#SBATCH --output=out.o
-#SBATCH --error=out.e
-#SBATCH --partition={1}
-#SBATCH --nodes=1
-#SBATCH --ntasks={2}
-#SBATCH --mail-type=END
-#SBATCH --mail-user={3}
-#SBATCH --mem={4}G
-#SBATCH --time={5}
-#SBATCH --array=1-10
-hostname
-work={6}
-cd $work
 
-
-if [[ ${{SLURM_ARRAY_TASK_ID}} -eq 1 ]]
-    then
-     module load schrodinger/2019-4
-    $SCHRODINGER/utilities/structconvert -imae {7}/{8}-out.mae -opdb {9}/{10}.pdb
-    obabel {11}/{12}.pdb -O {13}/{14}-conf.xyz -m
-    for i in {15}*xyz; do python3 ../utilities/xyz2com.py $i; echo ${{i%.*}}.com >> {16}-coms.txt; done
-    sbatch --dependency=afterok:$SLURM_JOB_ID {17}/{18}-lowest.sbatch
-    sbatch --dependency=afternotok:$SLURM_JOB_ID {19}-failed.sbatch
-
-else
-    sleep 30s
-fi
-
-nconf=$(cat {20}-coms.txt |wc -l)
-
-if [[ ${{SLURM_ARRAY_TASK_ID}} -le $nconf ]]
-    then
-    input=$(sed "${{SLURM_ARRAY_TASK_ID}}q;d" {21}-coms.txt)
-    export INPUT=$input
-    export WORKDIR=$work
-    export GAUSS_SCRDIR=$work
-    export g16root=/work/lopez/
-    . $g16root/g16/bsd/g16.profile
-
-    cd $WORKDIR
-    $g16root/g16/g16 $INPUT
-else
-    echo "no ${{SLURM_ARRAY_TASK_ID}}'th conformer generated" >> ../lowest_ts/{22}-lowest_ts-energies.txt
-fi
-""".format(title,optpartition,optcores,user,optmemory,opttime,conf_opt,conf_search,title,conf_search,title,conf_search,title,conf_opt,title,title,title,lowest_ts,title,title,title,title,title)
-    return conf
-
-def Getlowest(title,conf_opt,utilities,benchmark):
-    if benchmark == True:
-        lowest="""#!/bin/bash
-#SBATCH --job-name={0}
-#SBATCH --output=out.o
-#SBATCH --error=out.e
+def Failed_tsguess(title,user,ts_guess,conf_search,optroute,charge,multiplicity):
+    batch="""#!/bin/bash
+#SBATCH --job-name={0}-failedtsguess
+#SBATCH --output=resubmit.o
+#SBATCH --error=resubmit.e
 #SBATCH --partition=debug
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --mail-type=END
-#SBATCH --mail-user=neal.pa@husky.neu.edu
 #SBATCH --mem=1G
-#SBATCH --time=10:00
+#SBATCH --time=00:20:00
 hostname
 
-work={1}
+work={2}
 cd $work
+touch failed-script-ran
+time=$(date)
+echo "$SLURM_JOB_NAME $time" >> ../status.txt
 
-bash {2}/get-lowest.sh {3} conf_opt
-cd ../lowest_ts
-obabel {4}*log -o xyz -O {5}.xyz
-python3 ../utilities/xyz2com.py {6}.xyz benchmark
-for i in {7}*com; do echo $i >> {8}-coms.txt; done
-ID=$(sbatch --parsable {9}-submit.sbatch)
-sbatch --dependency=afternotok:$ID {10}-failed.sbatch
-""".format(title,conf_opt,utilities,title,title,title,title,title,title,title,title)
+if test -f {0}-resubmit.txt
+    then
+    nresub=$(sed "1q;d" {0}-resubmit.txt)
+else
+    nresub=0
+fi
+nresub=$((nresub+=1))
+if [[ $nresub -lt 2 ]]
+    then
+    rm {0}-resubmit.txt
+    echo $nresub >> {0}-resubmit.txt
+    for i in {0}*log
+        do
+        finished=$(tail $i | grep 'Normal termination' -c )
+        if [[ $finished -lt 1 ]]
+            then
+            maxiter=$(grep "Number of steps exceeded" $i)
+            if [[ $maxiter -gt 0 ]]
+                then
+                sed -i '1,/{3} {4}/!d' ${{i%.*}}.com
+                obabel $i -o xyz |tail -n +3 >> ${{i%.*}}.com
+                echo " " >> ${{i%.*}}.com
+                echo ${{i%.*}}.com >> {0}-resubmit.txt
+            else
+                sed -i '1,/{3} {4}/!d' ${{i%.*}}.com
+                obabel $i -o xyz |tail -n +3 >> ${{i%.*}}.com
+                echo " " >> ${{i%.*}}.com
+                echo ${{i%.*}}.com >> {0}-resubmit.txt
 
-    else:
-        lowest="""#!/bin/bash
-#SBATCH --job-name={0}
-#SBATCH --output=out.o
-#SBATCH --error=out.e
-#SBATCH --partition=debug
-#SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --mail-type=END
-#SBATCH --mail-user=neal.pa@husky.neu.edu
-#SBATCH --mem=1G
-#SBATCH --time=10:00
-hostname
-work={1}
-cd $work
-bash {2}/get-lowest.sh {3} conf_opt
-""".format(title,conf_opt,utilities,title)
+            fi
+        fi
+    done
+    toresub=$(cat {0}-resubmit.txt |wc -l)
+    currentarray=$(sed "12q;d" {0}-submit.sbatch)
+    sed -i "s/$currentarray/#SBATCH --array=2-$toresub/g" {0}-submit.sbatch
+    sed -i "s/{0}-coms.txt/{0}-resubmit.txt/g" {0}-submit.sbatch
+    ID=$(sbatch --parsable {0}-submit.sbatch)
+    sbatch --dependency=afterok:$ID {5}/{0}/CREST/{0}-CREST.sbatch
+    sbatch --dependency=afternotok:$ID {0}-failed.sbatch
 
-    return lowest
-
-def Maestro(c1,a1,a2,c2,title,xyz,conf_search,conf_opt):
-    C1=c1+1
-    A1=a1+1
-    A2=a2+1
-    C2=c2+1
-    maestrosubmit="""#!/bin/bash
-module load schrodinger/2019-4
-cd {0}
-sed -i 's/{1}    {2}    1/ {3}    {4}    2/g' {5}.mol2
-sed -i 's/{6}    {7}    1/ {8}    {9}    2/g' {10}.mol2
-sed -i 's/{11}     {12}    1/ {13}    {14}    2/g' {15}.mol2
-sed -i 's/{16}     {17}    1/ {18}    {19}    2/g' {20}.mol2
-$SCHRODINGER/utilities/mol2convert -imol2 {21}.mol2 -omae {22}.mae
-sed -i 's/7 1 N/7 0 N/g' {23}.mae
-ID=$("${{SCHRODINGER}}/macromodel" -JOBNAME maestroconf -HOST discovery-debug -LOCAL ./{24}.com | awk '{{ print $2 }}' | head -n 1 )
-sbatch --dependency=afterany:$ID {25}/{26}-submit.sbatch""".format(conf_search,A1, A2, A1, A2, title,A2, A1, A2, A1, title,A1, A2, A1, A2, title,A2, A1, A2, A1, title,title,title,title,title,conf_opt,title)
-
-    return maestrosubmit
-
+elif [[ $nresub == 2 ]]
+    then
+    touch freqonly
+    rm {0}-resubmit.txt
+    echo $nresub >> {0}-resubmit.txt
+    for i in {0}*log
+        do
+        finished=$(tail $i | grep 'Normal termination' -c )
+        if [[ $finished -lt 1 ]]
+            then
+            sed -i '1,/{3} {4}/!d' ${{i%.*}}.com
+            obabel $i -o xyz |tail -n +3 >> ${{i%.*}}.com
+            echo " " >> ${{i%.*}}.com
+            echo ${{i%.*}}.com >> {0}-resubmit.txt
+            sed -i 's/{6}/freq=noraman/g' ${{i%.*}}.com
+        fi
+    done
+    toresub=$(cat {0}-resubmit.txt |wc -l)
+    currentarray=$(sed "12q;d" {0}-submit.sbatch)
+    sed -i "s/$currentarray/#SBATCH --array=2-$toresub/g" {0}-submit.sbatch
+    sed -i "s/{0}-coms.txt/resubmit.txt/g" {0}-submit.sbatch
+    ID=$(sbatch --parsable {0}-submit.sbatch)
+    sbatch --dependency=afterok:$ID {5}/{0}/CREST/{0}-CREST.sbatch
+    sbatch --dependency=afternotok:$ID {0}-failed.sbatch
+fi
+""".format(title,user,ts_guess,charge,multiplicity,conf_search,optroute)
+    return batch
 
 def Ang(xyz,a,b,c):
     #a<-b->c
@@ -537,7 +351,7 @@ def ReadG16(title):
     for n,line in enumerate(log):
         if 'NAtoms' in line:
             natom=int(line.split()[1])
-        if 'Input orientation' in line:
+        if 'Standard orientation' in line:
             coord=log[n+5:n+5+natom]
         if 'Multiplicity =' in line:
             charge=line.split()[2]
@@ -556,6 +370,7 @@ def FindAx(D,atoms,axis):
     ## find axis atoms given the atomic number
     pairs=[]
     dists=[]
+
     for n,x in enumerate(atoms):
         for m,y in enumerate(atoms):
             if x == axis and y == axis and n != m:
@@ -810,7 +625,8 @@ def MoRot(file,ax,ang,index,optcores,optmemory,optmethod,optbasis,optroute,ts_gu
     with open('rotation.out','a') as log:
         log.write(info)
 
-        return charge,multiplicity,c1,a1,a2,c2,title,xyz,out_coord
+    natom=len(xyz)
+    return charge,multiplicity,c1,a1,a2,c2,title,xyz,out_coord,natom
 
 def Printxyz(xyz,atoms,title,index,cores,memory,method,basis,optimization_route,charge,multiplicity,ts_guess,specialopts):
     #natom=len(xyz)
@@ -827,7 +643,7 @@ def Printxyz(xyz,atoms,title,index,cores,memory,method,basis,optimization_route,
 auto-ts generator
 
 {8} {9}
-""".format(title,index,optcores,optmemory,optmethod,optbasis,optroute,specialopts,charge,multiplicity)
+""".format(title,index,optcores[0],optmemory[0],optmethod,optbasis,optroute,specialopts,charge,multiplicity)
     with open('%s/%s-rot-%s.com' % (ts_guess,title,index),'w') as out:
         out.write(com)
         out.write(coord)
@@ -893,6 +709,469 @@ def Readlist(list,opt_axis,opt_angles):
         jobs.append([file,out_axis,out_angles,name_index])
 
     return jobs
+
+
+#Conformational search
+def Conf_setup(conf_search,title):
+    if len(title) > 20:
+        abreviate = True
+    try:
+        os.mkdir('{0}/{1}'.format(conf_search, title))
+    except FileExistsError:
+        pass
+    try:
+        os.mkdir('{0}/{1}/CREST'.format(conf_search, title))
+    except FileExistsError:
+        pass
+    CRESTdir = '{0}/{1}/CREST'.format(conf_search, title)
+    try:
+        os.mkdir('{0}/{1}/ORCA'.format(conf_search, title))
+    except FileExistsError:
+        pass
+    ORCAdir = '{0}/{1}/ORCA'.format(conf_search, title)
+    return(CRESTdir,ORCAdir)
+
+
+
+def Conf_input(title,ts_guess,user,utilities,c1,a1,a2,c2,CRESTdir,ORCAdir,charge,multiplicity,CRESTcores,CRESTmem,CRESTtime,CRESTpartition,CRESTmethod,ORCAmethod,ORCAcores,ORCAmem,ORCApartition,ORCAtime,natom,lowest_ts):
+    if len(title) > 20:
+        tmptitle=title[0:10]
+    else:
+        tmptitle=title
+
+    CRESTsbatch = """#!/bin/bash
+#SBATCH --job-name={0}-CREST
+#SBATCH --output=out.o
+#SBATCH --error=out.e
+#SBATCH --partition={1}
+#SBATCH --nodes=1
+#SBATCH --ntasks={2}
+#SBATCH --mem={4}G
+#SBATCH --time={5}
+hostname
+
+cd {6}
+time=$(date)
+echo "$SLURM_JOB_NAME $time" >> ../status.txt
+if test -f {0}-ts-energies.txt
+    then
+    rm {0}-ts-energies.txt
+fi
+bash {7}/get-lowest.sh {0} ts_guess
+
+ulimit -s unlimited
+export OMP_STACKSIZE={4}G
+export OMP_NUM_THREADS={2},1
+
+export XTBPATH="/work/lopez/xtb/"
+export XTBHOME=$XTBPATH
+export OMP_MAX_ACTIVE_LEVELS=1
+export LD_LIBRARY_PATH=${{LD_LIBRARY_PATH}}:${{XTBHOME}}/lib
+export PYTHONPATH=${{PYTHONPATH}}:${{XTBHOME}}/python
+export LD_LIBRARY_PATH="/work/lopez/orca_4_2_1_linux_x86-64_shared_openmpi216/":"/work/lopez/OpenBLAS/":$LD_LIBRARY_PATH
+
+work={8}
+cd $work
+cp {0}.xyz {11}.xyz
+cp {0}.c {11}.c
+cp {11}.xyz {11}.ref
+
+/work/lopez/xtb/crest {11}.xyz {9} -cinp {11}.c > {0}.out
+cp crest_conformers.xyz ../ORCA/{0}-all.xyz
+obabel ../ORCA/{0}-all.xyz -O ../ORCA/{0}-all-sorted-conf.xyz -m
+sleep 30s
+nstruct=$(ls -la ../ORCA/{0}-all-sorted-conf*.xyz |wc -l)
+sed -i "s/END/$nstruct/g" ../ORCA/*sbatch
+ORCAID=$(sbatch --parsable ../ORCA/{0}-ORCA.sbatch)
+    """.format(title, CRESTpartition, CRESTcores, user, CRESTmem, CRESTtime, ts_guess,utilities,CRESTdir,CRESTmethod,conf_opt,tmptitle)
+
+    missing=[]
+    numbers=[c1, a1, a2, c2]
+    numbers.sort()
+    numbers.insert(0, 0)  # add the minimum value on begining of the list
+    numbers.append(natom + 1)  # add the maximum value at the end of the list
+    for rank in range(0, len(numbers) - 1):
+        if numbers[rank + 1] - numbers[rank] > 2:
+            missing.append("%s-%s" % (numbers[rank] + 1, numbers[rank + 1] - 1))
+        elif numbers[rank + 1] - numbers[rank] == 2:
+            missing.append(str(numbers[rank] + 1))
+    missing = str(missing)[1:-1]
+    include = missing.replace("'", "")
+
+    constraints = """$constrain
+angle: {0}, {1}, {2}, auto
+angle: {3}, {4}, {5}, auto
+force constant=1.0
+reference={6}.ref
+$metadyn
+atoms: {7}
+$end""".format(c1, a1, a2, c2, a2, a1, title, include)
+
+    with open('{0}/{1}.c'.format(CRESTdir, title), 'w') as constrain:
+        constrain.write(constraints)
+
+    ORCAsbatch = """#!/bin/sh
+## script for ORCA-4.2.1
+#SBATCH --nodes=1
+#SBATCH --ntasks={0}
+#SBATCH --time={1}
+#SBATCH --job-name={2}-ORCA
+#SBATCH --partition={3}
+#SBATCH --mem={4}Gb
+#SBATCH --output=%j.o
+#SBATCH --error=%j.e
+#SBATCH --array=1-END%100
+
+export WORKDIR={5}
+export ORCA_EXE=/work/lopez/orca_4_2_1_linux_x86-64_shared_openmpi216/
+export OPENMPI=/work/lopez/openmpi-2.1.6/
+export LD_LIBRARY_PATH=$OPENMPI/lib:$ORCA_EXE:$LD_LIBRARY_PATH
+export PATH=$OPENMPI/bin:$PATH
+
+cd $WORKDIR
+if [[ $SLURM_ARRAY_TASK_ID == 1 ]]
+    then
+    if test -f {2}-coms.txt
+        then
+        rm {2}-coms.txt
+    fi
+    nstruct=$(ls -la {2}-all-sorted-conf*.xyz |wc -l)
+    charge={6}
+    mult={7}
+    inp=$(head -n 5 {2}.inp)
+    for ((i=1;i<=nstruct;i++))
+        do
+        echo -e "${{inp/CHARGE MULTIPLICITY FILE/$charge $mult {2}-all-sorted-conf$i.xyz}}" > {2}-conf$i.inp
+        echo {2}-conf$i.inp >> {2}-coms.txt
+    done
+    sbatch --dependency=afterany:$SLURM_ARRAY_JOB_ID ../../../conf_opt/{2}-submit.sbatch
+    time=$(date)
+    echo "$SLURM_JOB_NAME $time" >> ../../../status.txt
+else
+    sleep 60s
+fi
+
+input=$(sed "${{SLURM_ARRAY_TASK_ID}}q;d" {2}-coms.txt)
+export INPUT=${{input%.*}}
+
+$ORCA_EXE/orca $INPUT.inp > $INPUT.out
+date >> $INPUT.out
+
+converged=$(grep "SCF NOT CONVERGED AFTER" -c $INPUT.out)
+if [[ $converged -gt 0 ]]
+    then 
+    echo "FINAL SINGLE POINT ENERGY     500" >> $INPUT.out
+fi
+    """.format(ORCAcores, ORCAtime, title, ORCApartition, ORCAmem, ORCAdir, charge, multiplicity)
+
+    with open('{0}/{1}-ORCA.sbatch'.format(ORCAdir,title), 'w') as ORCAbatch:
+        ORCAbatch.write(ORCAsbatch)
+
+    actualmem = int(ORCAmem / ORCAcores)
+    inputfile = """!{0}
+%pal nprocs {1} end
+%Maxcore {2}000
+*xyzfile CHARGE MULTIPLICITY FILE
+    """.format(ORCAmethod, ORCAcores, actualmem, title)
+
+    with open('{0}/{1}.inp'.format(ORCAdir,title), 'w') as ORCAinput:
+        ORCAinput.write(inputfile)
+
+    return(CRESTsbatch)
+
+
+#Conformer optimization
+def Sbatch_confopt(title,optpartition,optcores,user,optmemory,opttime,conf_opt,conf_search,lowest_ts,specialopts,optroute,optmethod,optbasis,charge,multiplicity):
+    conf="""#!/bin/bash
+#SBATCH --job-name={0}-confopt
+#SBATCH --output=out.o
+#SBATCH --error=out.e
+#SBATCH --partition={1}
+#SBATCH --nodes=1
+#SBATCH --ntasks={2}
+#SBATCH --mail-type=END
+#SBATCH --mail-user={3}
+#SBATCH --mem={4}G
+#SBATCH --time={5}
+#SBATCH --array=1-10
+hostname
+work={6}
+cd $work
+
+
+if [[ ${{SLURM_ARRAY_TASK_ID}} -eq 1 ]]
+    then
+    if test -f {0}-complete
+        then
+        rm {0}-complete
+        rm {0}-energies.txt
+        sed -i '1,/{8} {9}/!d' ${{i%.*}}.com
+    fi
+    cat {7}/{0}/ORCA/*out >> {0}-complete
+    nstruct=$(ls -la {7}/{0}/ORCA/{0}-all-sorted-conf*.xyz |wc -l)
+    for ((x=1;x<=nstruct;x++)); do  
+        cat {7}/{0}/ORCA/{0}-conf$x.out >> {0}-complete
+        awk "/FINAL SINGLE POINT ENERGY/{{i++}}i==$x{{print ; exit}}" {0}-complete | awk '{{ print $5}}' >> {0}-energies.txt; done
+    awk '{{print NR "   "  $s}}' {0}-energies.txt > {0}-output.txt
+    sort -k2n {0}-output.txt > {0}-energies-sorted.txt
+    lowest10=$(awk  '{{print $1}} NR==10{{exit}}' {0}-energies-sorted.txt )
+    count=0
+    for b in $lowest10
+        do
+        count=$((count+1))
+        tail -n +3 {7}/{0}/ORCA/{0}-all-sorted-conf$b.xyz >> {0}-conf$count.com
+        echo " " >> {0}-conf$count.com
+    done
+    sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID ../lowest_ts/{0}-lowest.sbatch
+    sbatch --dependency=afternotok:$SLURM_ARRAY_JOB_ID {0}-failed.sbatch
+    time=$(date)
+    echo "$SLURM_JOB_NAME $time" >> ../status.txt
+else
+    sleep 60s
+fi
+
+nconf=$(cat {0}-energies-sorted.txt |wc -l)
+
+if [[ ${{SLURM_ARRAY_TASK_ID}} -le $nconf ]]
+    then
+    input=$(sed "${{SLURM_ARRAY_TASK_ID}}q;d" {0}-coms.txt)
+    export INPUT=$input
+    export WORKDIR=$work
+    export GAUSS_SCRDIR=$work
+    export g16root=/work/lopez/
+    . $g16root/g16/bsd/g16.profile
+
+    cd $WORKDIR
+    $g16root/g16/g16 $INPUT
+else
+    echo "no ${{SLURM_ARRAY_TASK_ID}}'th conformer generated" >> ../lowest_ts/{0}-lowest_ts-energies.txt
+    rm {0}-conf$SLURM_ARRAY_TASK_ID.com
+fi
+""".format(title,optpartition,optcores[0],user,optmemory[0],opttime,conf_opt,conf_search,charge,multiplicity)
+
+    for i in range(1, 11):
+        inputfile = """%chk={0}-conf{1}.chk
+%nprocs={2}
+%mem={3}GB
+# {4}/{5} {6} {7}
+
+autots script
+
+{8} {9}
+""".format(title, i, optcores[0], optmemory[0], optmethod, optbasis, optroute, specialopts, charge, multiplicity)
+
+        with open('{0}/{1}-conf{2}.com'.format(conf_opt, title, i), 'w') as com:
+            com.write(inputfile)
+        if i == 1:
+            with open('{0}/{1}-coms.txt'.format(conf_opt, title), 'w') as coms:
+                coms.write('{0}-conf{1}.com\n'.format(title, i))
+        else:
+            with open('{0}/{1}-coms.txt'.format(conf_opt, title), 'a') as coms:
+                coms.write('{0}-conf{1}.com\n'.format(title, i))
+
+    return conf
+
+
+def Failed_confopt(title,user,conf_opt,lowest_ts,optroute,charge,multiplicity):
+    batch=r"""#!/bin/bash
+#SBATCH --job-name={0}-failedconf
+#SBATCH --output=resubmit.o
+#SBATCH --error=resubmit.e
+#SBATCH --partition=debug
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --mem=1G
+#SBATCH --time=00:20:00
+hostname
+
+work={2}
+cd $work
+touch failed-script-ran
+time=$(date)
+echo "$SLURM_JOB_NAME $time" >> ../status.txt
+if test -f {0}-resubmit.txt
+    then
+    nresub=$(sed "1q;d" {0}-resubmit.txt)
+else
+    nresub=0
+fi
+nresub=$((nresub+=1))
+if [[ $nresub -lt 2 ]]
+    then
+    rm {0}-resubmit.txt
+    echo $nresub >> {0}-resubmit.txt
+    for i in {0}*log
+        do
+        finished=$(grep 'Station' -c $i)
+        if [[ $finished -lt 2 ]]
+            then
+            convert=$(obabel $i -o xyz)
+            if [[ $convert == *"0 molecules converted"* ]]
+                then
+                echo "${{i%.*}} could not be converted, reverting to original" >> {0}-resublog.txt
+                old=$(grep "%oldchk=" -c ${{i%.*}}.com)
+                sed -i '1,/{4} {5}/!d' ${{i%.*}}.com
+                echo " " ${{i%.*}}.com
+                if [[ $old -gt 0 ]]
+                    then
+                    sed -i 1d ${{i%.*}}.com
+                fi
+                sed -i 's/geom=check guess=read//g' ${{i%.*}}.com
+                sed -i 's/opt=(readfc,ts,noeigen)/opt=(calcfc,ts,noeigen)/g' ${{i%.*}}.com
+                end=${{i#-conf*}}
+                index=${{end%.*}} 
+                tail -n +3 ../conf_search/{0}/ORCA/{0}-all-sorted-conf$index.xyz >> ${{i%.*}}.com
+                echo " " >>  ${{i%.*}}.com
+            else
+            sed -i '1,/{3} {4}/!d' ${{i%.*}}.com
+            termination=$(grep "Normal termination" -c $i)
+            cycles=$(grep "SCF Done" -c $i)
+            check=$(grep "geom=check guess=read" -c ${{i%.*}}.com)
+            old=$(grep "%oldchk=" -c ${{i%.*}}.com)
+            
+            #Non stationary point found
+                 #read in fc
+            if [[ $finished -eq 1 ]] && [[ $termination -ge 2 ]]
+                then
+                echo "${{i%.*}} Non-stationary point found, reading previous fc" >> {0}-resublog.txt
+                echo " " >> ${{i%.*}}.com
+                if [[ $old -gt 0 ]]
+                    then
+                    sed -i 1d ${{i%.*}}.com
+                fi
+                sed -i 's/geom=check guess=read//g' ${{i%.*}}.com
+                mv ${{i%.*}}.chk ${{i%.*}}-readingfc.chk
+                sed -i 's/opt=(calcfc,ts,noeigen)/opt=(readfc,ts,noeigen)/g' ${{i%.*}}.com
+                sed -i 's/opt=(readfc,ts,noeigen)/opt=(readfc,ts,noeigen) geom=check guess=read/g' ${{i%.*}}.com
+                sed -i "1s/^/%oldchk=${{i%.*}}-readingfc.chk\n/" ${{i%.*}}.com
+                echo " " >> ${{i%.*}}.com
+
+             #stationary found, but didnt finish frequencies or far from starting geometry
+                 #re-calculate force constants
+             elif ([[ $finished -eq 1 ]] && [[ $termination -lt 2 ]]) || ([[ $cycles -gt 15 ]])
+                then
+                echo "${{i%.*}} failed frequencies or is far from input geometry" >> {0}-resublog.txt
+                if [[ $old -gt 0 ]]
+                    then
+                    sed -i 1d ${{i%.*}}.com
+                fi
+                obabel $i -o xyz | tail -n +3 >> ${{i%.*}}.com
+                echo " " >> ${{i%.*}}.com
+                sed -i 's/geom=check guess=read//g' ${{i%.*}}.com
+                sed -i 's/opt=(readfc,ts,noeigen)/opt=(calcfc,ts,noeigen)/g' ${{i%.*}}.com
+                echo " " >> ${{i%.*}}.com
+
+             #no stationary point found yet
+             else
+                fc=$(grep "Converged?" -c $i)
+  
+                #if force constants were finished computing, read them
+                if [[ $fc -gt 0 ]]
+                    then
+                    echo "${{i%.*}} did not find stationary point, reading fc" >> {0}-resublog.txt
+                    echo " " >> ${{i%.*}}.com
+                    if [[ $old -gt 0 ]]
+                        then
+                        sed -i 1d ${{i%.*}}.com
+                    fi
+                    sed -i 's/geom=check guess=read//g' ${{i%.*}}.com
+                    mv ${{i%.*}}.chk ${{i%.*}}-readingfc.chk
+                    sed -i 's/opt=(calcfc,ts,noeigen)/opt=(readfc,ts,noeigen)/g' ${{i%.*}}.com
+                    sed -i 's/opt=(readfc,ts,noeigen)/opt=(readfc,ts,noeigen) geom=check guess=read/g' ${{i%.*}}.com
+                    sed -i "1s/^/%oldchk=${{i%.*}}-readingfc.chk\n/" ${{i%.*}}.com
+                    echo " " >> ${{i%.*}}.com
+                 #if not, take geometry and restart
+                 else
+                    echo "${{i%.*}} did not find stationary point and has no fc" >> {0}-resublog.txt
+                    obabel $i -o xyz |tail -n +3 >> ${{i%.*}}.com
+                    echo " " >> ${{i%.*}}.com
+                    if [[ $old -gt 0 ]]
+                        then
+                        sed -i 1d ${{i%.*}}.com
+                    fi
+                    sed -i 's/geom=check guess=read//g' ${{i%.*}}.com
+                    sed -i 's/opt=(readfc,ts,noeigen)/opt=(calcfc,ts,noeigen)/g' ${{i%.*}}.com 
+                    echo " " >> ${{i%.*}}.com
+                fi
+            fi
+            fi
+        echo ${{i%.*}}.com >> {0}-resubmit.txt
+        echo " " >> ${{i%.*}}.com
+    fi
+    done
+    toresub=$(cat {0}-resubmit.txt |wc -l)
+    currentarray=$(sed "12q;d" {0}-submit.sbatch)
+    sed -i "s/$currentarray/#SBATCH --array=2-$toresub/g" {0}-submit.sbatch
+    sed -i "s/{0}-coms.txt/{0}-resubmit.txt/g" {0}-submit.sbatch
+    ID=$(sbatch --parsable {0}-submit.sbatch)
+    sbatch --dependency=afterok:$ID  {5}/{0}-lowest.sbatch
+    sbatch --dependency=afternotok:$ID {0}-failed.sbatch
+fi
+""".format(title,user,conf_opt,charge, multiplicity,lowest_ts)
+
+    return batch
+
+#Lowest energy scripts
+def Getlowest(title,conf_opt,utilities,benchmark):
+    if benchmark == True:
+        lowest="""#!/bin/bash
+#SBATCH --job-name={0}-getlowbench
+#SBATCH --output=out.o
+#SBATCH --error=out.e
+#SBATCH --partition=debug
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --mem=1G
+#SBATCH --time=10:00
+hostname
+
+work={1}
+cd $work
+time=$(date)
+echo "$SLURM_JOB_NAME $time"  >> ../status.txt
+echo "$SLURM_JOB_NAME autots reached endpoint. Lowest ts in $work at $time" >> /scratch/neal.pa/autots-runlog/{0}
+if test -f {0}-ts-energies.txt 
+    then 
+    rm {0}-ts-energies.txt
+fi
+if test -f {0}-coms.txt
+    then
+    rm {0}-coms.txt
+fi
+bash {2}/get-lowest.sh {0} conf_opt
+cd ../lowest_ts
+obabel {0}.log -o xyz -O {0}.xyz
+python3 ../utilities/xyz2com.py {0}.xyz benchmark
+for i in {0}*com; do echo $i >> {0}-coms.txt; done
+sbatch --parsable {0}-tier0.sbatch
+""".format(title,conf_opt,utilities)
+
+    else:
+        lowest="""#!/bin/bash
+#SBATCH --job-name={0}-getlow
+#SBATCH --output=out.o
+#SBATCH --error=out.e
+#SBATCH --partition=debug
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --mem=1G
+#SBATCH --time=10:00
+hostname
+work={1}
+cd $work
+time=$(date)
+echo "$SLURM_JOB_NAME $time" >> ../status.txt
+echo "$SLURM_JOB_NAME autots reached endpoint. Lowest ts in $work at $time" >> /scratch/neal.pa/autots-runlog/{0}
+if test -f {3}-ts-energies.txt
+    then
+    rm {3}-ts-energies.txt
+fi
+
+bash {2}/get-lowest.sh {3} conf_opt
+""".format(title,conf_opt,utilities,title)
+
+    return lowest
+
 
 def main():
     ## This is the main function
@@ -982,24 +1261,24 @@ def main():
     for n,i in enumerate(jobs):
         frag1=[]
         file,ax,ang,index=i
-        charge,multiplicity,c1,a1,a2,c2,title,xyz,new_mol=MoRot(file,ax,ang,index,optcores,optmemory,optmethod,optbasis,optroute,ts_guess,specialopts)
+        charge,multiplicity,c1,a1,a2,c2,title,xyz,new_mol,natom=MoRot(file,ax,ang,index,optcores,optmemory,optmethod,optbasis,optroute,ts_guess,specialopts)
+        
         if b == 0:
-            with open('{0}/{1}.sh'.format(conf_search,title),'w') as maestro:
-                maestro.write(Maestro(c1,a1,a2,c2,title,xyz,conf_search,conf_opt))
-            with open('{0}/{1}-conf_search.sbatch'.format(conf_search,title),'w') as batch:
-                batch.write(SchrodingerBatch(title,ts_guess,user,utilities,c1,a1,a2,c2,conf_search))
+            CRESTdir,ORCAdir=Conf_setup(conf_search,title)
+            with open('{0}/{1}/CREST/{1}-CREST.sbatch'.format(conf_search,title),'w') as batch:
+                batch.write(Conf_input(title,ts_guess,user,utilities,c1,a1,a2,c2,CRESTdir,ORCAdir,charge,multiplicity,CRESTcores,CRESTmem,CRESTtime,CRESTpartition,CRESTmethod,ORCAmethod,ORCAcores,ORCAmem,ORCApartition,ORCAtime,natom,lowest_ts))
             with open('{0}/{1}-submit.sbatch'.format(ts_guess,title),'w') as sbatch:
-                sbatch.write(Sbatch(optpartition,optcores,user,optmemory,opttime,len(jobs),ts_guess,title))
+                sbatch.write(Sbatch_tsguess(optpartition,optcores,user,optmemory,opttime,len(jobs),ts_guess,title))
             with open('{0}/{1}-submit.sbatch'.format(conf_opt,title),'w') as conf:
-                conf.write(Conf(title,optpartition,optcores,user,optmemory,opttime,conf_opt,conf_search,lowest_ts))
+                conf.write(Sbatch_confopt(title,optpartition,optcores,user,optmemory,opttime,conf_opt,conf_search,lowest_ts,specialopts,optroute,optmethod,optbasis,charge,multiplicity))
             with open('{0}/{1}-coms.txt'.format(ts_guess,title),'w') as coms:
                 coms.write("{0}-rot-{1}.com\n".format(title,index))
             with open('{0}/{1}-lowest.sbatch'.format(lowest_ts,title),'w') as lowest:
                 lowest.write(Getlowest(title,conf_opt,utilities,benchmark))
             with open('{0}/{1}-failed.sbatch'.format(ts_guess,title), 'w') as failed:
-                failed.write(Fixtsguess(title,user,ts_guess,conf_search,optroute,charge,multiplicity))
+                failed.write(Failed_tsguess(title,user,ts_guess,conf_search,optroute,charge,multiplicity))
             with open('{0}/{1}-failed.sbatch'.format(conf_opt,title),'w') as failed:
-                failed.write(Fixconfopt(title,user,conf_opt,lowest_ts,optroute,charge,multiplicity))
+                failed.write(Failed_confopt(title,user,conf_opt,lowest_ts,optroute,charge,multiplicity))
         else:
             with open('{0}/{1}-coms.txt'.format(ts_guess,title),'a') as coms:
                 coms.write("{0}-rot-{1}.com\n".format(title,index))
@@ -1019,4 +1298,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 

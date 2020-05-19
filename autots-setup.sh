@@ -8,7 +8,13 @@ if test -f input/ts_guess-list.txt
     sed -i '1,/#local workflow variables/!d' utilities/config.py
     find ./ -name "*energies.txt" -delete
     find ./ -name "*-resubmit.txt" -delete
-else
+    find ./ -name "*-tier*txt" -delete
+    find ./ -name "LOWEST_TS_NOTFOUNDBYCREST" -delete
+    find ./ -name "*complete" -delete
+    find ./ -name "freqonly" -delete
+    find ./ -name "*output.txt" -delete
+elif compgen -G "*log" > /dev/null;
+    then
     mkdir utilities
     mkdir input
     mkdir ts_guess
@@ -16,8 +22,17 @@ else
     mkdir conf_opt
     mkdir lowest_ts
     mv *log input/
-fi
+else
+    echo "AUTOS"
+    echo " "
+    echo "Error while setting up autots"
+    echo "There is no log file or existing autots in this directory"
+    echo " "
+    exit 1
 
+fi
+rename "conf" "CONF" input/*log
+rename "tier" "TIER" input/*log
 for i in input/*log
     do
     echo -e "$workdir/$i\n$workdir/$i V1 175 R1   90 R2   0\n$workdir/$i V1 175 R1   90 R2 180\n$workdir/$i V1 175 R1  180 R2  90\n$workdir/$i V1 175 R1  180 R2 180\n$workdir/$i V1 175 R1  -90 R2   0\n$workdir/$i V1 175 R1  -90 R2  90" >> input/ts_guess-list.txt
@@ -26,7 +41,6 @@ done
 cp /home/$USER/autots/config.py  utilities/
 cp /home/$USER/autots/generate-inputs.py utilities/
 cp /home/$USER/autots/get-lowest.sh utilities/
-cp /home/$USER/autots/maestro-input.py utilities/
 cp /home/$USER/autots/start.sh ./
 cp /home/$USER/autots/xyz2com.py utilities/
 
