@@ -78,10 +78,10 @@
                 done
             fi
             ediff=$(bc <<< "($rottsenergy - $lowesttsenergy)*627.5")
-           
-            if (( $(echo "$ediff" < '-0.01' | bc -l) ))
+            cutoff='-0.01'
+            if [ 1 -eq "$(echo "${ediff} < ${cutoff}" | bc)" ]
                 then
-                touch LOWEST_TS_NOTFOUNDBYCREST
+                 touch ../lowest_ts/LOWEST_TS_NOTFOUNDBYCREST-$search
                 echo "MoRot TS is substantially lower than other conformers by $ediff kcal/mol: $lowestenergyts `pwd`" >>  /scratch/neal.pa/autots-errors/$search
             fi
             cp $lowestenergyts ../lowest_ts/$search.log
