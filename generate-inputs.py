@@ -911,7 +911,6 @@ if [[ ${{SLURM_ARRAY_TASK_ID}} -eq 1 ]]
         rm {0}-energies.txt
         sed -i '1,/{8} {9}/!d' ${{i%.*}}.com
     fi
-    cat {7}/{0}/ORCA/*out >> {0}-complete
     nstruct=$(ls -la {7}/{0}/ORCA/{0}-all-sorted-conf*.xyz |wc -l)
     for ((x=1;x<=nstruct;x++)); do  
         cat {7}/{0}/ORCA/{0}-conf$x.out >> {0}-complete
