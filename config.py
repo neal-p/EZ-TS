@@ -25,6 +25,4 @@ ORCAmem=55
 ORCApartition='lopez,short'
 ORCAtime='1-00:00:00'
 
-
-user='neal.pa@husky.neu.edu'
 #local workflow variables
