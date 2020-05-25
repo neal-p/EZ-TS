@@ -954,7 +954,7 @@ if [[ ${{SLURM_ARRAY_TASK_ID}} -eq 1 ]]
         echo $lowest10
         count=$((count+1))
         obabel {7}/{0}/ORCA/{0}-conf$b.out -o xyz | tail -n +3  >> {0}-conf$count.com
-        obabel {7}/{0}/ORCA/{0}-conf$b.out -o xyz {0}-conf$count.xyz
+        obabel {7}/{0}/ORCA/{0}-conf$b.out -o xyz -O {0}-conf$count.xyz
         echo " " >> {0}-conf$count.com
     done
     sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID ../lowest_ts/{0}-lowest.sbatch
