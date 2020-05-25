@@ -78,7 +78,7 @@
                 done
             fi
             ediff=$(bc <<< "($rottsenergy - $lowesttsenergy)*627.5")
-            cutoff='-0.01'
+            cutoff='-0.4'
             if [ 1 -eq "$(echo "${ediff} < ${cutoff}" | bc)" ]
                 then
                  touch ../lowest_ts/LOWEST_TS_NOTFOUNDBYCREST-$search

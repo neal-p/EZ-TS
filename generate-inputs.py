@@ -179,8 +179,13 @@ class Element:
 
 #Initial ts_guess Input
 def Sbatch_tsguess(optpartition,optcores,user,optmemory,opttime,njobs,ts_guess,title):
+    if len(title) > 20:
+        tmptitle=title[0:10]
+    else:
+        tmptitle=title
+
     sbatch="""#!/bin/bash
-#SBATCH --job-name={0}-tsguess
+#SBATCH --job-name={7}-tsguess
 #SBATCH --output=out.o
 #SBATCH --error=out.e
 #SBATCH --partition={1}
@@ -204,7 +209,7 @@ if [[ $SLURM_ARRAY_TASK_ID == 1 ]]
     echo "$SLURM_JOB_NAME $time" >> ../status.txt
     echo "$SLURM_JOB_NAME autots started in $work" >> /scratch/neal.pa/autots-runlog/{0}
 else
-    sleep 60s
+    sleep 120s
 fi
 
 input=$(sed "${{SLURM_ARRAY_TASK_ID}}q;d" {0}-coms.txt)
@@ -216,13 +221,18 @@ export g16root=/work/lopez/
 
 cd $WORKDIR
 $g16root/g16/g16 $INPUT
-""".format(title,optpartition,optcores[0],user,optmemory[0],opttime,ts_guess)
+""".format(title,optpartition,optcores[0],user,optmemory[0],opttime,ts_guess,tmptitle)
     return sbatch
 
 
 def Failed_tsguess(title,user,ts_guess,conf_search,optroute,charge,multiplicity):
+    if len(title) > 20:
+        tmptitle=title[0:10]
+    else:
+        tmptitle=title
+
     batch="""#!/bin/bash
-#SBATCH --job-name={0}-failedtsguess
+#SBATCH --job-name={7}-failedtsguess
 #SBATCH --output=resubmit.o
 #SBATCH --error=resubmit.e
 #SBATCH --partition=debug
@@ -303,7 +313,7 @@ elif [[ $nresub == 2 ]]
     sbatch --dependency=afterok:$ID {5}/{0}/CREST/{0}-CREST.sbatch
     sbatch --dependency=afternotok:$ID {0}-failed.sbatch
 fi
-""".format(title,user,ts_guess,charge,multiplicity,conf_search,optroute)
+""".format(title,user,ts_guess,charge,multiplicity,conf_search,optroute,tmptitle)
     return batch
 
 def Ang(xyz,a,b,c):
@@ -740,7 +750,7 @@ def Conf_input(title,ts_guess,user,utilities,c1,a1,a2,c2,CRESTdir,ORCAdir,charge
         tmptitle=title
 
     CRESTsbatch = """#!/bin/bash
-#SBATCH --job-name={0}-CREST
+#SBATCH --job-name={11}-CREST
 #SBATCH --output=out.o
 #SBATCH --error=out.e
 #SBATCH --partition={1}
@@ -779,7 +789,7 @@ cp {11}.xyz {11}.ref
 /work/lopez/xtb/crest {11}.xyz {9} -cinp {11}.c > {0}.out
 cp crest_conformers.xyz ../ORCA/{0}-all.xyz
 obabel ../ORCA/{0}-all.xyz -O ../ORCA/{0}-all-sorted-conf.xyz -m
-sleep 30s
+sleep 120s
 nstruct=$(ls -la ../ORCA/{0}-all-sorted-conf*.xyz |wc -l)
 sed -i "s/END/$nstruct/g" ../ORCA/*sbatch
 ORCAID=$(sbatch --parsable ../ORCA/{0}-ORCA.sbatch)
@@ -819,7 +829,7 @@ $end""".format(C1, A1, A2, C2, A2, A1, tmptitle, include)
 #SBATCH --nodes=1
 #SBATCH --ntasks={0}
 #SBATCH --time={1}
-#SBATCH --job-name={2}-ORCA
+#SBATCH --job-name={8}-ORCA
 #SBATCH --partition={3}
 #SBATCH --mem={4}Gb
 #SBATCH --output=%j.o
@@ -842,7 +852,7 @@ if [[ $SLURM_ARRAY_TASK_ID == 1 ]]
     nstruct=$(ls -la {2}-all-sorted-conf*.xyz |wc -l)
     charge={6}
     mult={7}
-    inp=$(head -n 5 {2}.inp)
+    inp=$(head -n 14 {2}.inp)
     for ((i=1;i<=nstruct;i++))
         do
         echo -e "${{inp/CHARGE MULTIPLICITY FILE/$charge $mult {2}-all-sorted-conf$i.xyz}}" > {2}-conf$i.inp
@@ -852,7 +862,7 @@ if [[ $SLURM_ARRAY_TASK_ID == 1 ]]
     time=$(date)
     echo "$SLURM_JOB_NAME $time" >> ../../../status.txt
 else
-    sleep 60s
+    sleep 120s
 fi
 
 input=$(sed "${{SLURM_ARRAY_TASK_ID}}q;d" {2}-coms.txt)
@@ -864,9 +874,14 @@ date >> $INPUT.out
 converged=$(grep "SCF NOT CONVERGED AFTER" -c $INPUT.out)
 if [[ $converged -gt 0 ]]
     then 
-    echo "FINAL SINGLE POINT ENERGY     500" >> $INPUT.out
+    energies=$(grep "FINAL SINGLE POINT ENERGY" -c $INPUT.out)
+    if [[ $energies -gt 0 ]]
+        echo "$INPUT did not converge last scf, but previous energy was taken" >> /scratch/autots-errors/{2}
+    else
+        echo "FINAL SINGLE POINT ENERGY     500" >> $INPUT.out
+        echo "$INPUT did not converge scf at all, assuming geometry is garbage. Please check" >> /scratch/autots-errors/{2}
 fi
-    """.format(ORCAcores, ORCAtime, title, ORCApartition, ORCAmem, ORCAdir, charge, multiplicity)
+    """.format(ORCAcores, ORCAtime, title, ORCApartition, ORCAmem, ORCAdir, charge, multiplicity,tmptitle)
 
     with open('{0}/{1}-ORCA.sbatch'.format(ORCAdir,title), 'w') as ORCAbatch:
         ORCAbatch.write(ORCAsbatch)
@@ -875,8 +890,17 @@ fi
     inputfile = """!{0}
 %pal nprocs {1} end
 %Maxcore {2}000
+%geom
+MaxIter 5
+Constraints
+{{C {4} C}}
+{{C {5} C}}
+{{C {6} C}}
+{{C {7} C}}
+end
+end
 *xyzfile CHARGE MULTIPLICITY FILE
-    """.format(ORCAmethod, ORCAcores, actualmem, title)
+    """.format(ORCAmethod, ORCAcores, actualmem, title,a1,a2,c1,c2)
 
     with open('{0}/{1}.inp'.format(ORCAdir,title), 'w') as ORCAinput:
         ORCAinput.write(inputfile)
@@ -886,8 +910,13 @@ fi
 
 #Conformer optimization
 def Sbatch_confopt(title,optpartition,optcores,user,optmemory,opttime,conf_opt,conf_search,lowest_ts,specialopts,optroute,optmethod,optbasis,charge,multiplicity):
+    if len(title) > 20:
+        tmptitle=title[0:10]
+    else:
+        tmptitle=title
+
     conf="""#!/bin/bash
-#SBATCH --job-name={0}-confopt
+#SBATCH --job-name={10}-confopt
 #SBATCH --output=out.o
 #SBATCH --error=out.e
 #SBATCH --partition={1}
@@ -913,7 +942,8 @@ if [[ ${{SLURM_ARRAY_TASK_ID}} -eq 1 ]]
     fi
     nstruct=$(ls -la {7}/{0}/ORCA/{0}-all-sorted-conf*.xyz |wc -l)
     for ((x=1;x<=nstruct;x++)); do  
-        cat {7}/{0}/ORCA/{0}-conf$x.out >> {0}-complete
+        energy=$(tac {7}/{0}/ORCA/{0}-conf$x.out | grep "FINAL SINGLE POINT ENERGY" -m1)
+        echo $energy >> {0}-complete
         awk "/FINAL SINGLE POINT ENERGY/{{i++}}i==$x{{print ; exit}}" {0}-complete | awk '{{ print $5}}' >> {0}-energies.txt; done
     awk '{{print NR "   "  $s}}' {0}-energies.txt > {0}-output.txt
     sort -k2n {0}-output.txt > {0}-energies-sorted.txt
@@ -921,8 +951,10 @@ if [[ ${{SLURM_ARRAY_TASK_ID}} -eq 1 ]]
     count=0
     for b in $lowest10
         do
+        echo $lowest10
         count=$((count+1))
-        tail -n +3 {7}/{0}/ORCA/{0}-all-sorted-conf$b.xyz >> {0}-conf$count.com
+        obabel {7}/{0}/ORCA/{0}-conf$b.out -o xyz | tail -n +3  >> {0}-conf$count.com
+        obabel {7}/{0}/ORCA/{0}-conf$b.out -o xyz {0}-conf$count.xyz
         echo " " >> {0}-conf$count.com
     done
     sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID ../lowest_ts/{0}-lowest.sbatch
@@ -930,7 +962,7 @@ if [[ ${{SLURM_ARRAY_TASK_ID}} -eq 1 ]]
     time=$(date)
     echo "$SLURM_JOB_NAME $time" >> ../status.txt
 else
-    sleep 60s
+    sleep 120s
 fi
 
 nconf=$(cat {0}-energies-sorted.txt |wc -l)
@@ -946,11 +978,19 @@ if [[ ${{SLURM_ARRAY_TASK_ID}} -le $nconf ]]
 
     cd $WORKDIR
     $g16root/g16/g16 $INPUT
+ 
+    station=$(grep "Station" -c ${{INPUT%.*}}.log)
+    if [[ $station -lt 2 ]]
+       then
+       exit 1234
+    fi
+
 else
     echo "no ${{SLURM_ARRAY_TASK_ID}}'th conformer generated" >> ../lowest_ts/{0}-lowest_ts-energies.txt
     rm {0}-conf$SLURM_ARRAY_TASK_ID.com
 fi
-""".format(title,optpartition,optcores[0],user,optmemory[0],opttime,conf_opt,conf_search,charge,multiplicity)
+
+""".format(title,optpartition,optcores[0],user,optmemory[0],opttime,conf_opt,conf_search,charge,multiplicity,tmptitle)
 
     for i in range(1, 11):
         inputfile = """%chk={0}-conf{1}.chk
@@ -976,8 +1016,13 @@ autots script
 
 
 def Failed_confopt(title,user,conf_opt,lowest_ts,optroute,charge,multiplicity):
+    if len(title) > 20:
+        tmptitle=title[0:10]
+    else:
+        tmptitle=title
+
     batch=r"""#!/bin/bash
-#SBATCH --job-name={0}-failedconf
+#SBATCH --job-name={6}-failedconf
 #SBATCH --output=resubmit.o
 #SBATCH --error=resubmit.e
 #SBATCH --partition=debug
@@ -1013,7 +1058,7 @@ if [[ $nresub -lt 2 ]]
                 then
                 echo "${{i%.*}} could not be converted, reverting to original" >> {0}-resublog.txt
                 old=$(grep "%oldchk=" -c ${{i%.*}}.com)
-                sed -i '1,/{4} {5}/!d' ${{i%.*}}.com
+                sed -i '1,/{3} {4}/!d' ${{i%.*}}.com
                 echo " " ${{i%.*}}.com
                 if [[ $old -gt 0 ]]
                     then
@@ -1023,7 +1068,7 @@ if [[ $nresub -lt 2 ]]
                 sed -i 's/opt=(readfc,ts,noeigen)/opt=(calcfc,ts,noeigen)/g' ${{i%.*}}.com
                 end=${{i#-conf*}}
                 index=${{end%.*}} 
-                tail -n +3 ../conf_search/{0}/ORCA/{0}-all-sorted-conf$index.xyz >> ${{i%.*}}.com
+                tail -n +3 {0}-conf$index.xyz >> ${{i%.*}}.com
                 echo " " >>  ${{i%.*}}.com
             else
             sed -i '1,/{3} {4}/!d' ${{i%.*}}.com
@@ -1109,16 +1154,25 @@ if [[ $nresub -lt 2 ]]
     ID=$(sbatch --parsable {0}-submit.sbatch)
     sbatch --dependency=afterok:$ID  {5}/{0}-lowest.sbatch
     sbatch --dependency=afternotok:$ID {0}-failed.sbatch
+else
+    echo "{0} failed too many times. RUN TERMINATED" >> ../status.txt
+    echo "{0} failed too many times. RUN TERMINATED" >> /scratch/neal.pa/autots-errors/{0}
+
 fi
-""".format(title,user,conf_opt,charge, multiplicity,lowest_ts)
+""".format(title,user,conf_opt,charge, multiplicity,lowest_ts,tmptitle)
 
     return batch
 
 #Lowest energy scripts
 def Getlowest(title,conf_opt,utilities,benchmark):
+    if len(title) > 20:
+        tmptitle=title[0:10]
+    else:
+        tmptitle=title
+
     if benchmark == True:
         lowest="""#!/bin/bash
-#SBATCH --job-name={0}-getlowbench
+#SBATCH --job-name={3}-getlowbench
 #SBATCH --output=out.o
 #SBATCH --error=out.e
 #SBATCH --partition=debug
@@ -1147,11 +1201,11 @@ obabel {0}.log -o xyz -O {0}.xyz
 python3 ../utilities/xyz2com.py {0}.xyz benchmark
 for i in {0}*com; do echo $i >> {0}-coms.txt; done
 sbatch --parsable {0}-tier0.sbatch
-""".format(title,conf_opt,utilities)
+""".format(title,conf_opt,utilities,tmptitle)
 
     else:
         lowest="""#!/bin/bash
-#SBATCH --job-name={0}-getlow
+#SBATCH --job-name={4}-getlow
 #SBATCH --output=out.o
 #SBATCH --error=out.e
 #SBATCH --partition=debug
@@ -1171,7 +1225,7 @@ if test -f {3}-ts-energies.txt
 fi
 
 bash {2}/get-lowest.sh {3} conf_opt
-""".format(title,conf_opt,utilities,title)
+""".format(title,conf_opt,utilities,title,tmptitle)
 
     return lowest
 

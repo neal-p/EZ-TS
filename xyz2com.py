@@ -119,8 +119,15 @@ equillibrium database script
 
 def Sbatch(total,p,optpartition,optcores,user,optmemory,opttime,workdir,title):
     next=p+1
+
+  if len(title) > 20:
+        tmptitle=title[0:10]
+    else:
+        tmptitle=title
+
+
     sbatch="""#!/bin/bash
-#SBATCH --job-name={0}-tier{8}
+#SBATCH --job-name={11}-tier{8}
 #SBATCH --output=out.o
 #SBATCH --error=out.e
 #SBATCH --partition={1}
@@ -130,7 +137,7 @@ def Sbatch(total,p,optpartition,optcores,user,optmemory,opttime,workdir,title):
 #SBATCH --mail-user={3}
 #SBATCH --mem={4}G
 #SBATCH --time={5}
-#SBATCH --array=1-{10}%20
+#SBATCH --array=1-{10}%50
 hostname
 work={6}
 cd $work
@@ -155,13 +162,26 @@ export g16root=/work/lopez/
 . $g16root/g16/bsd/g16.profile
 cd $WORKDIR
 $g16root/g16/g16 $INPUT
-""".format(title,optpartition,optcores,user,optmemory,opttime,workdir,title,p,next,total)
+
+station=$(grep "Station" -c ${{INPUT%.*}}.log)
+if [[ $station -lt 2 ]]
+    then
+    exit 1234
+fi
+
+""".format(title,optpartition,optcores,user,optmemory,opttime,workdir,title,p,next,total, tmptitle)
     return sbatch
 
 def Fixcbenchmarkopt(p,title,user,workdir,optroute,charge,multiplicity):
     next=p+1
+
+  if len(title) > 20:
+        tmptitle=title[0:10]
+    else:
+        tmptitle=title
+
     batch=r"""#!/bin/bash
-#SBATCH --job-name={0}-failedbench
+#SBATCH --job-name={7}-failedbench
 #SBATCH --output=resubmit.o
 #SBATCH --error=resubmit.e
 #SBATCH --partition=debug
@@ -191,6 +211,7 @@ if [[ $nresub -lt 3 ]]
         do
         echo "READING FILE $i" >>{0}-resublog.txt
         finished=$(grep 'Station' -c $i)
+        scf=$(grep "SCF Error SCF Error SCF Error SCF Error" $i -c )
         if [[ $finished -lt 2 ]]
             then
             convert=$(obabel $i -o xyz)
@@ -212,6 +233,12 @@ if [[ $nresub -lt 3 ]]
                 top=$(head -n 8 ${{i%.*}}.com)
                 echo -ne "${{top/opt=(calcfc,ts,noeigen)/freq=noraman geom=check guess=read}}" >> ${{i%.*}}.com
                 echo " " >>  ${{i%.*}}.com
+
+            #SCF Convergence issues
+            elif [[ $scf -gt 0 ]]
+                then
+                echo "${{i%.*}} SCF failed to converge, using scf=qc" >> {0}-resublog.txt
+                sed -i 's/opt/scf=qc opt/g' ${{i%.*}}.com)  
             else
 
             sed -i '1,/{4} {5}/!d' ${{i%.*}}.com
@@ -322,8 +349,11 @@ if [[ $nresub -lt 3 ]]
         then
         sbatch --dependency=afterok:$ID {0}-tier{6}.sbatch
     fi
+else
+    echo "{0} failed too many times. RUN TERMINATED" >> ../status.txt
+    echo "{0} failed too many times. RUN TERMINATED" >> /scratch/neal.pa/autots-errors/{0}
 fi
-""".format(title,user,workdir,p,charge,multiplicity,next)
+""".format(title,user,workdir,p,charge,multiplicity,next,tmptitle)
     return batch
 
 
