@@ -119,8 +119,7 @@ equillibrium database script
 
 def Sbatch(total,p,optpartition,optcores,user,optmemory,opttime,workdir,title):
     next=p+1
-
-  if len(title) > 20:
+    if len(title) > 20:
         tmptitle=title[0:10]
     else:
         tmptitle=title
@@ -175,7 +174,7 @@ fi
 def Fixcbenchmarkopt(p,title,user,workdir,optroute,charge,multiplicity):
     next=p+1
 
-  if len(title) > 20:
+    if len(title) > 20:
         tmptitle=title[0:10]
     else:
         tmptitle=title
