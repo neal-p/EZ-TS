@@ -1,6 +1,6 @@
 # Input Parameters
-optcores=['7','28','28','28']
-optmemory=['28','112','112','112']
+optcores=['7','14','14','14']
+optmemory=['28','56','56','56']
 optpartition="short,lopez"
 optmethod="b3lyp"
 optbasis="6-31G(d)"
@@ -26,4 +26,16 @@ ORCApartition='lopez,short'
 ORCAtime='1-00:00:00'
 
 
+user='neal.pa@husky.neu.edu'
+user='neal.pa@husky.neu.edu'
+user='neal.pa@husky.neu.edu'
+user='neal.pa@husky.neu.edu'
+user='neal.pa@husky.neu.edu'
+user='neal.pa@husky.neu.edu'
+user='neal.pa@husky.neu.edu'
+user='neal.pa@husky.neu.edu'
+user='neal.pa@husky.neu.edu'
+user='neal.pa@husky.neu.edu'
+user='neal.pa@husky.neu.edu'
+user='neal.pa@husky.neu.edu'
 #local workflow variables

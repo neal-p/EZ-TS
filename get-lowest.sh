@@ -38,6 +38,12 @@
         if [[ $2 == 'ts_guess' ]]
             then
             obabel $lowestenergyts -o xyz -O ../conf_search/$search/CREST/$search.xyz
+            finalfreq=$(grep "Frequencies" -m1 $lowestenergyts |awk '{ print $3 }' ) 
+            finalfreqint=${finalfreq%.*}
+            if [[ $finalfreqint -gt -750 ]]
+               then
+               sed -i '/dihedral:/d' ../conf_search/$search/CREST/$search.c 
+            fi
         elif [[ $2 == 'conf_opt' ]]
             then
             if test -f ../lowest_ts/$search-lowest_ts-energies.txt

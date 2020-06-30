@@ -4,16 +4,16 @@
 workdir=`pwd`
 if test -f input/ts_guess-list.txt
     then
-    rm input/ts_guess-list.txt
+   # rm input/ts_guess-list.txt
     sed -i '1,/#local workflow variables/!d' utilities/config.py
-    find ./ -name "*energies.txt" -delete
-    find ./ -name "*-resubmit.txt" -delete
-    find ./ -name "*-tier*txt" -delete
-    find ./ -name "LOWEST_TS_NOTFOUNDBYCREST" -delete
-    find ./ -name "*complete" -delete
-    find ./ -name "freqonly" -delete
-    find ./ -name "*output.txt" -delete
-elif compgen -G "*log" > /dev/null;
+   # find ./ -name "*energies.txt" -delete
+   # find ./ -name "*-resubmit.txt" -delete
+   # find ./ -name "*-tier*txt" -delete
+  #  find ./ -name "LOWEST_TS_NOTFOUNDBYCREST" -delete
+  #  find ./ -name "*complete" -delete
+  #  find ./ -name "freqonly" -delete
+  #  find ./ -name "*output.txt" -delete
+elif compgen -G "*log" > /dev/null 
     then
     mkdir utilities
     mkdir input
@@ -22,6 +22,37 @@ elif compgen -G "*log" > /dev/null;
     mkdir conf_opt
     mkdir lowest_ts
     mv *log input/
+    rename "tier" "TIER" input/*log
+    rename "tier" "TIER" input/*xyz
+    rename "conf" "CONF" input/*log
+    rename "conf" "CONF" input/*xyz
+    for i in input/*log 
+        do
+        echo -e "$workdir/$i\n$workdir/$i V1 175 R1   90 R2   0\n$workdir/$i V1 175 R1   90 R2 180\n$workdir/$i V1 175 R1  180 R2  90\n$workdir/$i V1 175 R1  180 R2 180\n$workdir/$i V1 175 R1  -90 R2   0\n$workdir/$i V1 175 R1  -90 R2  90" >> input/ts_guess-list.txt
+        echo -e "$workdir/$i\n$workdir/$i V1 175 R2   90 R1   0\n$workdir/$i V1 175 R2   90 R1 180\n$workdir/$i V1 175 R2  180 R1  90\n$workdir/$i V1 175 R2  180 R1 180\n$workdir/$i V1 175 R2  -90 R1   0\n$workdir/$i V1 175 R2  -90 R1  90" >> input/ts_guess-list.txt
+
+done
+
+elif compgen -G "*xyz" > /dev/null
+    then
+    mkdir utilities
+    mkdir input
+    mkdir ts_guess
+    mkdir conf_search
+    mkdir conf_opt
+    mkdir lowest_ts
+    mv *xyz input/
+    rename "tier" "TIER" input/*log
+    rename "tier" "TIER" input/*xyz
+    rename "conf" "CONF" input/*log
+    rename "conf" "CONF" input/*xyz
+    for i in input/*xyz
+        do
+        echo -e "$workdir/$i\n$workdir/$i V1 175 R1   90 R2   0\n$workdir/$i V1 175 R1   90 R2 180\n$workdir/$i V1 175 R1  180 R2  90\n$workdir/$i V1 175 R1  180 R2 180\n$workdir/$i V1 175 R1  -90 R2   0\n$workdir/$i V1 175 R1  -90 R2  90" >> input/ts_guess-list.txt
+        echo -e "$workdir/$i\n$workdir/$i V1 175 R2   90 R1   0\n$workdir/$i V1 175 R2   90 R1 180\n$workdir/$i V1 175 R2  180 R1  90\n$workdir/$i V1 175 R2  180 R1 180\n$workdir/$i V1 175 R2  -90 R1   0\n$workdir/$i V1 175 R2  -90 R1  90" >> input/ts_guess-list.txt
+
+done
+
 else
     echo "AUTOS"
     echo " "
@@ -31,12 +62,6 @@ else
     exit 1
 
 fi
-rename "conf" "CONF" input/*log
-rename "tier" "TIER" input/*log
-for i in input/*log
-    do
-    echo -e "$workdir/$i\n$workdir/$i V1 175 R1   90 R2   0\n$workdir/$i V1 175 R1   90 R2 180\n$workdir/$i V1 175 R1  180 R2  90\n$workdir/$i V1 175 R1  180 R2 180\n$workdir/$i V1 175 R1  -90 R2   0\n$workdir/$i V1 175 R1  -90 R2  90" >> input/ts_guess-list.txt
-done
 
 cp /home/$USER/autots/config.py  utilities/
 cp /home/$USER/autots/generate-inputs.py utilities/

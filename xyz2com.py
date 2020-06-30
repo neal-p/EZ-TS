@@ -149,6 +149,7 @@ if [[ $SLURM_ARRAY_TASK_ID == 1 ]]
     ID=$SLURM_ARRAY_JOB_ID
     if test -f {0}-tier{9}.sbatch
         then
+        echo "tier0 complete"
         sbatch --dependency=afterok:$ID {0}-tier{9}.sbatch
             fi
     sbatch --dependency=afternotok:$ID {0}-tier{8}-failed.sbatch
@@ -237,7 +238,7 @@ if [[ $nresub -lt 3 ]]
             elif [[ $scf -gt 0 ]]
                 then
                 echo "${{i%.*}} SCF failed to converge, using scf=qc" >> {0}-resublog.txt
-                sed -i 's/opt/scf=qc opt/g' ${{i%.*}}.com)  
+                sed -i 's/opt/scf=qc opt/g' ${{i%.*}}.com
             else
 
             sed -i '1,/{4} {5}/!d' ${{i%.*}}.com
@@ -346,6 +347,7 @@ if [[ $nresub -lt 3 ]]
 
     if test -f {0}-tier{6}.sbatch
         then
+        echo "tier1"
         sbatch --dependency=afterok:$ID {0}-tier{6}.sbatch
     fi
 else
@@ -358,13 +360,15 @@ fi
 
 #take xyz and make com
 def writeinput(basislist,tier,inputdir,basename,name,workdir,optcores,optmemory,optmethod,optbasis,optroute,specialopts,x,charge,multiplicity,benchmarkflag,user):
-    if x ==0:
-        with open('{0}/{1}.log'.format(inputdir,basename)) as logfile:
-            log=logfile.read().splitlines()
-        for n,line in enumerate(log):
-            if 'Multiplicity =' in line:
-                charge=line.split()[2]
-                multiplicity=line.split()[5]
+    #if x ==0:
+    #    with open('{0}/{1}.log'.format(inputdir,basename)) as logfile:
+    #        log=logfile.read().splitlines()
+    #    for n,line in enumerate(log):
+    #        if 'Multiplicity =' in line:
+     #           charge=line.split()[2]
+     #           multiplicity=line.split()[5]
+    charge=0
+    multiplicity=1
     coord=open('{0}.xyz'.format(name), 'r').read().splitlines()
     natom=int(coord[0])
     coord=coord[2:natom+2]

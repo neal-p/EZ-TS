@@ -195,7 +195,7 @@ def Sbatch_tsguess(optpartition,optcores,user,optmemory,opttime,njobs,ts_guess,t
 #SBATCH --mail-user={3}
 #SBATCH --mem={4}G
 #SBATCH --time={5}
-#SBATCH --array=1-7
+#SBATCH --array=1-13
 hostname
 
 work={6}
@@ -349,6 +349,30 @@ def Deh(xyz,a,b,c,d):
     beta=np.arccos(cosb)*57.2958
     return beta
 
+def ReadXYZ(title):
+## This function read coordinates from .xyz
+    with open('%s.xyz' % (title),'r') as xyzfile:
+        coord=xyzfile.read().splitlines()
+        natom=int(coord[0])
+        coord=coord[2:2+natom]
+
+    xyz=[]
+    atoms=[]
+
+    for i in coord:
+        e,x,y,z=i.split()
+        n=Element(e).getNuc()
+        x,y,z=float(x),float(y),float(z)
+        atoms.append(n)
+        xyz.append([x,y,z])
+
+    xyz=np.array(xyz)
+    charge=0
+    multiplicity=1
+  
+    return charge,multiplicity,atoms,xyz
+
+
 def ReadG16(title):
     ## This function read coordinates from Gaussian .log
     with open('%s.log' % (title),'r') as logfile:
@@ -490,9 +514,11 @@ def MoRot(file,ax,ang,index,optcores,optmemory,optmethod,optbasis,optroute,ts_gu
 
     ## read coordinates
     filename=file.split('/')[-1]
+    #print(filename)
     title,ext=filename.split('.')
+    
     if ext == 'xyz':
-        atoms,xyz=ReadXYZ(title)
+        charge,multiplicity,atoms,xyz=ReadXYZ(title)
     elif ext == 'log':
         charge,multiplicity,atoms,xyz=ReadG16(title)
     else:
@@ -815,6 +841,7 @@ ORCAID=$(sbatch --parsable ../ORCA/{0}-ORCA.sbatch)
     constraints = """$constrain
 angle: {0}, {1}, {2}, auto
 angle: {3}, {4}, {5}, auto
+dihedral: {0}, {1}, {2}, {3}, auto
 force constant=1.0
 reference={6}.ref
 $metadyn
@@ -872,16 +899,28 @@ $ORCA_EXE/orca $INPUT.inp > $INPUT.out
 date >> $INPUT.out
 
 converged=$(grep "SCF NOT CONVERGED AFTER" -c $INPUT.out)
-if [[ $converged -gt 0 ]]
-    then 
-    energies=$(grep "FINAL SINGLE POINT ENERGY" -c $INPUT.out)
-    if [[ $energies -gt 0 ]]
-        echo "$INPUT did not converge last scf, but previous energy was taken" >> /scratch/autots-errors/{2}
-    else
-        echo "FINAL SINGLE POINT ENERGY     500" >> $INPUT.out
-        echo "$INPUT did not converge scf at all, assuming geometry is garbage. Please check" >> /scratch/autots-errors/{2}
+unreliablestep=$(grep "HUGE, UNRELIABLE STEP WAS ABOUT TO BE TAKEN" -c $INPUT.out)
+if [[ $unreliablestep -gt 0 ]] || [[ $converged -gt 0 ]]
+    then
+        sed -i 's#{9}#{9} Slowconv NOSOSCF DIIS#g' $INPUT.inp
+        $ORCA_EXE/orca $INPUT.inp > $INPUT.out
+        date >> $INPUT.out
+        converged=$(grep "SCF NOT CONVERGED AFTER" -c $INPUT.out)
+        if [[ $converged -gt 0 ]]
+            then
+            energies=$(grep "FINAL SINGLE POINT ENERGY" -c $INPUT.out)
+            if [[ $energies -gt 0 ]]
+                then
+                echo "$INPUT did not converge last scf, but previous energy was taken" >> /scratch/autots-errors/{2}
+        exit 0
+            else
+                echo "FINAL SINGLE POINT ENERGY     500" >> $INPUT.out
+                exit 0
 fi
-    """.format(ORCAcores, ORCAtime, title, ORCApartition, ORCAmem, ORCAdir, charge, multiplicity,tmptitle)
+fi
+fi
+
+    """.format(ORCAcores, ORCAtime, title, ORCApartition, ORCAmem, ORCAdir, charge, multiplicity,tmptitle,ORCAmethod)
 
     with open('{0}/{1}-ORCA.sbatch'.format(ORCAdir,title), 'w') as ORCAbatch:
         ORCAbatch.write(ORCAsbatch)
@@ -1314,13 +1353,13 @@ def main():
         jobs=[[input,opt_axis,opt_angles,1]]
 
     all=''
-    b=0
+    b=1
     for n,i in enumerate(jobs):
         frag1=[]
         file,ax,ang,index=i
         charge,multiplicity,c1,a1,a2,c2,title,xyz,new_mol,natom=MoRot(file,ax,ang,index,optcores,optmemory,optmethod,optbasis,optroute,ts_guess,specialopts)
         
-        if b == 0:
+        if b == 1:
             CRESTdir,ORCAdir=Conf_setup(conf_search,title)
             with open('{0}/{1}/CREST/{1}-CREST.sbatch'.format(conf_search,title),'w') as batch:
                 batch.write(Conf_input(title,ts_guess,user,utilities,c1,a1,a2,c2,CRESTdir,ORCAdir,charge,multiplicity,CRESTcores,CRESTmem,CRESTtime,CRESTpartition,CRESTmethod,ORCAmethod,ORCAcores,ORCAmem,ORCApartition,ORCAtime,natom,lowest_ts))
@@ -1339,16 +1378,16 @@ def main():
         else:
             with open('{0}/{1}-coms.txt'.format(ts_guess,title),'a') as coms:
                 coms.write("{0}-rot-{1}.com\n".format(title,index))
-        if b < 6:
+        if b < 13:
             b+=1
         else:
-            b=0
+            b=1
 
         all+=new_mol
         sys.stdout.write('Progress: %10s/%s\r' % (n+1,len(jobs)))
 
     print('')
-    with open('summary.xyz','w') as out:
+    with open('summary','w') as out:
         out.write(all)
 
 
