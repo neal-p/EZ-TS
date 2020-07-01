@@ -13,15 +13,15 @@ benchmarkspecialopts=['scrf=(iefpcm,solvent=water)','scrf=(iefpcm,solvent=water)
 benchmarkbasis=[['6-31G(d)'],['6-31+G(d,p)','6-311+G(d,p)'],['cc-pvdz','aug-cc-pvdz','cc-pvtz','aug-cc-pvtz']]
 
 #CONFORMATIONAL SEARCH:
-CRESTcores=14
-CRESTmem=55
+CRESTcores=16
+CRESTmem=62
 CRESTtime='1-00:00:00'
 CRESTpartition='short,lopez'
 CRESTmethod=CRESTmethod='-xnam /work/lopez/xtb/xtb_6.2.3/bin/xtb -g H2O -ewin 500 -T 14 -opt crude -subrmsd --verbose'
 
 ORCAmethod='B3LYP/G D3BJ 6-31G(d) def2/J NOAUTOSTART Opt cpcm(water)'
-ORCAcores=7
-ORCAmem=55
+ORCAcores=8
+ORCAmem=63
 ORCApartition='lopez,short'
 ORCAtime='1-00:00:00'
 
