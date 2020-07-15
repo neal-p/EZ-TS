@@ -992,8 +992,8 @@ if [[ ${{SLURM_ARRAY_TASK_ID}} -eq 1 ]]
         do
         echo $lowest10
         count=$((count+1))
-        obabel {7}/{0}/ORCA/{0}-conf$b.out -o xyz | tail -n +3  >> {0}-conf$count.com
-        obabel {7}/{0}/ORCA/{0}-conf$b.out -o xyz {0}-conf$count.xyz
+        python3 ../utilities/orca2xyz.py {7}/{0}/ORCA/{0}-conf$b.out {0}-conf$count.xyz
+        tail -n +3 {0}-conf$count.xyz >> {0}-conf$count.com
         echo " " >> {0}-conf$count.com
     done
     sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID ../lowest_ts/{0}-lowest.sbatch

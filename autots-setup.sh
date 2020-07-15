@@ -68,6 +68,7 @@ cp /home/$USER/autots/generate-inputs.py utilities/
 cp /home/$USER/autots/get-lowest.sh utilities/
 cp /home/$USER/autots/start.sh ./
 cp /home/$USER/autots/xyz2com.py utilities/
+cp /home/$USER/autots/orca2xyz.py utilities/
 
 echo "maindir='$workdir'" >> utilities/config.py
 echo "utilities='$workdir/utilities'" >> utilities/config.py
