@@ -195,7 +195,7 @@ def Sbatch_tsguess(optpartition,optcores,user,optmemory,opttime,njobs,ts_guess,t
 #SBATCH --mail-user={3}
 #SBATCH --mem={4}G
 #SBATCH --time={5}
-#SBATCH --array=1-13
+#SBATCH --array=1-12
 hostname
 
 work={6}
