@@ -28,8 +28,8 @@ elif compgen -G "*log" > /dev/null
     rename "conf" "CONF" input/*xyz
     for i in input/*log 
         do
-        echo -e "$workdir/$i\n$workdir/$i V1 175 R1   90 R2   0\n$workdir/$i V1 175 R1   90 R2 180\n$workdir/$i V1 175 R1  180 R2  90\n$workdir/$i V1 175 R1  180 R2 180\n$workdir/$i V1 175 R1  -90 R2   0\n$workdir/$i V1 175 R1  -90 R2  90" >> input/ts_guess-list.txt
-        echo -e "$workdir/$i\n$workdir/$i V1 175 R2   90 R1   0\n$workdir/$i V1 175 R2   90 R1 180\n$workdir/$i V1 175 R2  180 R1  90\n$workdir/$i V1 175 R2  180 R1 180\n$workdir/$i V1 175 R2  -90 R1   0\n$workdir/$i V1 175 R2  -90 R1  90" >> input/ts_guess-list.txt
+        echo -e "$workdir/$i V1 175 R1   90 R2   0\n$workdir/$i V1 175 R1   90 R2 180\n$workdir/$i V1 175 R1  180 R2  90\n$workdir/$i V1 175 R1  180 R2 180\n$workdir/$i V1 175 R1  -90 R2   0\n$workdir/$i V1 175 R1  -90 R2  90" >> input/ts_guess-list.txt
+        echo -e "$workdir/$i V2 175 R1   90 R2   0\n$workdir/$i V2 175 R1   90 R2 180\n$workdir/$i V2 175 R1  180 R2  90\n$workdir/$i V2 175 R1  180 R2 180\n$workdir/$i V2 175 R1  -90 R2   0\n$workdir/$i V2 175 R1  -90 R2  90" >> input/ts_guess-list.txt
 
 done
 
