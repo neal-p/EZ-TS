@@ -1378,7 +1378,7 @@ def main():
         else:
             with open('{0}/{1}-coms.txt'.format(ts_guess,title),'a') as coms:
                 coms.write("{0}-rot-{1}.com\n".format(title,index))
-        if b < 13:
+        if b < 12:
             b+=1
         else:
             b=0
