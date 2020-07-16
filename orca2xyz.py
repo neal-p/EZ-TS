@@ -33,6 +33,6 @@ converted from {1}.out\n""".format(natom, infile)
     newxyz.write(xyzline)
 
 for i in range(0,natom):
-    xyzline="""{0}    {1}    {2}    {3}\n""".format(atoms[i], xyz[i,0], xyz[i,1], xyz[i,2])
+    xyzline="""{0}    {1:.5f}    {2:.5f}    {3:.5f}\n""".format(atoms[i], xyz[i,0], xyz[i,1], xyz[i,2])
     with open(outfile,'a') as newxyz:
         newxyz.write(xyzline) 
