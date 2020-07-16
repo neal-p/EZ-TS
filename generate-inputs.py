@@ -1353,13 +1353,13 @@ def main():
         jobs=[[input,opt_axis,opt_angles,1]]
 
     all=''
-    b=0
+    b=1
     for n,i in enumerate(jobs):
         frag1=[]
         file,ax,ang,index=i
         charge,multiplicity,c1,a1,a2,c2,title,xyz,new_mol,natom=MoRot(file,ax,ang,index,optcores,optmemory,optmethod,optbasis,optroute,ts_guess,specialopts)
         
-        if b == 0:
+        if b == 1:
             CRESTdir,ORCAdir=Conf_setup(conf_search,title)
             with open('{0}/{1}/CREST/{1}-CREST.sbatch'.format(conf_search,title),'w') as batch:
                 batch.write(Conf_input(title,ts_guess,user,utilities,c1,a1,a2,c2,CRESTdir,ORCAdir,charge,multiplicity,CRESTcores,CRESTmem,CRESTtime,CRESTpartition,CRESTmethod,ORCAmethod,ORCAcores,ORCAmem,ORCApartition,ORCAtime,natom,lowest_ts))
@@ -1381,7 +1381,7 @@ def main():
         if b < 12:
             b+=1
         else:
-            b=0
+            b=1
 
         all+=new_mol
         sys.stdout.write('Progress: %10s/%s\r' % (n+1,len(jobs)))
