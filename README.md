@@ -15,8 +15,7 @@ USAGE
         To setup a workflow, in a directory of Gaussian log files or XYZ coordinate files simply type 'autots-setup'
         This will create the workflow architecture and set up all calculations with the default parameters set in /home/USER/autots/config.py*
 
-            *You can edit the default config, 
-            or change the settings of a particular workflow by editing the config file in the /someworkflow/utilities/config.py
+            *You can edit the default config, or change the settings of a particular workflow by editing the config file in the /someworkflow/utilities/config.py
 
             To update input files in a workflow directory based on the /someworkflow/utilities/config.py file, run 're-configure' anywhere in that workflow
 
