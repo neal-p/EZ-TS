@@ -17,15 +17,16 @@ elif [[ "$currentdir" == *lowest_ts* ]]
     then
     cd ../input
 elif [[ "$currentdir" == *input* ]]
-    then pass
+    then 
 else
     cd input
 fi
 
 #check if benchmarking was requested
-benchmark=$(grep "--benchmark" summary -c)
+benchmark=$(grep "\--benchmark" summary -c)
 if [[ $benchmark -gt 0 ]]
     then
+    echo "Benchmarking kept active"
     python3 ../utilities/generate-inputs.py -l ts_guess-list.txt --benchmark
     else
     python3 ../utilities/generate-inputs.py -l ts_guess-list.txt
