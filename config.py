@@ -14,9 +14,9 @@ OPENMPI='/work/lopez/openmpi-2.1.6/'
 partition='short'
 
 #EZTS error log directory - directory where you want to store information about calculation errors
-errorlog='/scratch/neal.pa/autots-errors/
+errorlog='/scratch/neal.pa/autots-errors/'
 #EZTS run log - directory where you want to store information about instances of EZTS
-runlog='/scratch/neal.pa/autots-runlog/
+runlog='/scratch/neal.pa/autots-runlog/'
 
 
 ########################
