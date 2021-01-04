@@ -882,8 +882,8 @@ $end""".format(C1, A1, A2, C2, A2, A1, tmptitle, include)
 #SBATCH --array=1-END%100
 
 export WORKDIR={5}
-export ORCA_EXE={11}
-export OPENMPI={12}
+export ORCA_EXE={10}
+export OPENMPI={11}
 export LD_LIBRARY_PATH=$OPENMPI/lib:$ORCA_EXE:$LD_LIBRARY_PATH
 export PATH=$OPENMPI/bin:$PATH
 
