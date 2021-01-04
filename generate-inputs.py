@@ -1313,7 +1313,7 @@ def main():
     print(header)
     with open('rotation.out','w') as log:
         log.write(header)
-
+    usage=''
     description=''
     parser = OptionParser(usage=usage, description=description)
     parser.add_option('-c', dest='input',    type=str,   nargs=1, help='Input coordinates file, xyz or log.')
