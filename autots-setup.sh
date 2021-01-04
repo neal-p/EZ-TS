@@ -92,6 +92,7 @@ fi
 if ! [ -z ${smiles+x} ]
     then
     mv $smiles input/
+    mv *pdb input/
 fi
 
 echo "Setup command options used for this run: $benchmarking_flag $smiles" > ./input/summary
