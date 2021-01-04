@@ -53,21 +53,21 @@ elif compgen -G "*xyz" > /dev/null
 done
 
 else
-    echo "AUTOS"
+    echo "EZTS"
     echo " "
-    echo "Error while setting up autots"
-    echo "There is no log file or existing autots in this directory"
+    echo "Error while setting up EZTS"
+    echo "There is no xyz, log file or existing EZTS in this directory"
     echo " "
     exit 1
 
 fi
 
-cp /home/$USER/autots/config.py  utilities/
-cp /home/$USER/autots/generate-inputs.py utilities/
-cp /home/$USER/autots/get-lowest.sh utilities/
-cp /home/$USER/autots/start.sh ./
-cp /home/$USER/autots/xyz2com.py utilities/
-cp /home/$USER/autots/orca2xyz.py utilities/
+cp ~/EZTS/config.py  utilities/
+cp ~/EZTS/generate-inputs.py utilities/
+cp ~/EZTS/get-lowest.sh utilities/
+cp ~/EZTS/start.sh ./
+cp ~/EZTS/xyz2com.py utilities/
+cp ~/EZTS/orca2xyz.py utilities/
 
 echo "maindir='$workdir'" >> utilities/config.py
 echo "utilities='$workdir/utilities'" >> utilities/config.py
