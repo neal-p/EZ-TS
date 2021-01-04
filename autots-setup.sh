@@ -1,14 +1,16 @@
 #!/bin/bash
 
-
 benchmarking_flag=''
 smiles=''
+optstring=":s:b"
 
-while getopts 's:b' flag; do
-  case "${flag}" in
+while getopts ${optstring} arg; do
+  case "${arg}" in
+
     b) benchmarking_flag='--benchmark' ;;
     s) smiles="${OPTARG}" ;;
-       exit 1 ;;
+    ?)
+      echo "Invalid option: -${OPTARG}." ;;
   esac
 done
 
@@ -20,9 +22,13 @@ if [ -z ${smiles+x} ]
     #no smiles to convert
     pass
     else
+    echo "Reading smiles from $smiles"
     python3 ~/EZTS/smiles23D.py $smiles
+
+#unfortunately a bit messy to convert to pdb then xyz, but rdkit is struggling to directly to xyz
+    for i in *.pdb; do obabel $i -o xyz -O ${i%.*}.xyz; done
 fi
-    
+
 
 if test -f input/ts_guess-list.txt
     then
@@ -35,7 +41,7 @@ if test -f input/ts_guess-list.txt
   #  find ./ -name "*complete" -delete
   #  find ./ -name "freqonly" -delete
   #  find ./ -name "*output.txt" -delete
-elif compgen -G "*log" > /dev/null 
+elif compgen -G "*log" > /dev/null
     then
     mkdir utilities
     mkdir input
@@ -48,7 +54,7 @@ elif compgen -G "*log" > /dev/null
     rename "tier" "TIER" input/*xyz
     rename "conf" "CONF" input/*log
     rename "conf" "CONF" input/*xyz
-    for i in input/*log 
+    for i in input/*log
         do
         echo -e "$workdir/$i V1 175 R1   90 R2   0\n$workdir/$i V1 175 R1   90 R2 180\n$workdir/$i V1 175 R1  180 R2  90\n$workdir/$i V1 175 R1  180 R2 180\n$workdir/$i V1 175 R1  -90 R2   0\n$workdir/$i V1 175 R1  -90 R2  90" >> input/ts_guess-list.txt
         echo -e "$workdir/$i V2 175 R1   90 R2   0\n$workdir/$i V2 175 R1   90 R2 180\n$workdir/$i V2 175 R1  180 R2  90\n$workdir/$i V2 175 R1  180 R2 180\n$workdir/$i V2 175 R1  -90 R2   0\n$workdir/$i V2 175 R1  -90 R2  90" >> input/ts_guess-list.txt
