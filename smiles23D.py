@@ -11,8 +11,8 @@ allinputs=np.genfromtxt(input,dtype='str')
 #...     ...
 
 
-smiles=allinputs[:,0]
-names=allinputs[:,1]
+smiles=allinputs[:,1]
+names=allinputs[:,0]
 for b,c in enumerate(smiles):
 
     mol = AllChem.MolFromSmiles(c)
