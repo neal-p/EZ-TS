@@ -640,7 +640,7 @@ def Conf_setup(conf_search,title):
 ##########################
 
 #sbatch for tsguess - submits firt optimizations
-def Sbatch_tsguess(optpartition,optcores,user,optmemory,opttime,njobs,ts_guess,title,g16root):
+def Sbatch_tsguess(optpartition,optcores,user,optmemory,opttime,njobs,ts_guess,title,g16root,runlog):
     if len(title) > 20:
         tmptitle=title[0:10]
     else:
@@ -669,7 +669,7 @@ if [[ $SLURM_ARRAY_TASK_ID == 1 ]]
     sbatch --dependency=afternotok:$SLURM_ARRAY_JOB_ID {0}-failed.sbatch
     time=$(date)
     echo "$SLURM_JOB_NAME $time" >> ../status.txt
-    echo "$SLURM_JOB_NAME autots started in $work" >> /scratch/neal.pa/autots-runlog/{0}
+    echo "$SLURM_JOB_NAME autots started in $work" >> {9}/{0}
 else
     sleep 120s
 fi
@@ -683,7 +683,7 @@ export g16root={8}
 
 cd $WORKDIR
 $g16root/g16/g16 $INPUT
-""".format(title,optpartition,optcores[0],user,optmemory[0],opttime,ts_guess,tmptitle,g16root)
+""".format(title,optpartition,optcores[0],user,optmemory[0],opttime,ts_guess,tmptitle,g16root,runlog)
     return sbatch
 
 # failed script for tsguess - finds failed jobs and resubmits them. Up to 3 tries, then just frequencies are computed
@@ -782,7 +782,7 @@ fi
 #################################
 
 #conformatinoal search input - write 
-def Conf_input(title,ts_guess,user,utilities,c1,a1,a2,c2,CRESTdir,ORCAdir,charge,multiplicity,CRESTcores,CRESTmem,CRESTtime,CRESTpartition,CRESTmethod,ORCAmethod,ORCAcores,ORCAmem,ORCApartition,ORCAtime,natom,lowest_ts,XTBPATH,LD_LIBRARY_PATH,ORCA_EXE,OPENMPI):
+def Conf_input(title,ts_guess,user,utilities,c1,a1,a2,c2,CRESTdir,ORCAdir,charge,multiplicity,CRESTcores,CRESTmem,CRESTtime,CRESTpartition,CRESTmethod,ORCAmethod,ORCAcores,ORCAmem,ORCApartition,ORCAtime,natom,lowest_ts,XTBPATH,LD_LIBRARY_PATH,ORCA_EXE,OPENMPI,errorlog):
     if len(title) > 20:
         tmptitle=title[0:10]
     else:
@@ -929,7 +929,7 @@ if [[ $unreliablestep -gt 0 ]] || [[ $converged -gt 0 ]]
             energies=$(grep "FINAL SINGLE POINT ENERGY" -c $INPUT.out)
             if [[ $energies -gt 0 ]]
                 then
-                echo "$INPUT did not converge last scf, but previous energy was taken" >> /scratch/autots-errors/{2}
+                echo "$INPUT did not converge last scf, but previous energy was taken" >> {12}/{2}
         exit 0
             else
                 echo "FINAL SINGLE POINT ENERGY     500" >> $INPUT.out
@@ -938,7 +938,7 @@ fi
 fi
 fi
 
-    """.format(ORCAcores, ORCAtime, title, ORCApartition, ORCAmem, ORCAdir, charge, multiplicity,tmptitle,ORCAmethod,ORCA_EXE,OPENMPI)
+    """.format(ORCAcores, ORCAtime, title, ORCApartition, ORCAmem, ORCAdir, charge, multiplicity,tmptitle,ORCAmethod,ORCA_EXE,OPENMPI,errorlog)
 
     with open('{0}/{1}-ORCA.sbatch'.format(ORCAdir,title), 'w') as ORCAbatch:
         ORCAbatch.write(ORCAsbatch)
@@ -1075,7 +1075,7 @@ autots script
     return conf
 
 # failed script for conf opt - resubmits the failed jobs, up to 3 times
-def Failed_confopt(title,user,conf_opt,lowest_ts,optroute,charge,multiplicity):
+def Failed_confopt(title,user,conf_opt,lowest_ts,optroute,charge,multiplicity,errorlog):
     if len(title) > 20:
         tmptitle=title[0:10]
     else:
@@ -1216,10 +1216,10 @@ if [[ $nresub -lt 3 ]]
     sbatch --dependency=afternotok:$ID {0}-failed.sbatch
 else
     echo "{0} failed too many times. RUN TERMINATED" >> ../status.txt
-    echo "{0} failed too many times. RUN TERMINATED" >> /scratch/neal.pa/autots-errors/{0}
+    echo "{0} failed too many times. RUN TERMINATED" >> {7}/{0}
 
 fi
-""".format(title,user,conf_opt,charge, multiplicity,lowest_ts,tmptitle)
+""".format(title,user,conf_opt,charge, multiplicity,lowest_ts,tmptitle,errorlog)
 
     return batch
 
@@ -1227,7 +1227,7 @@ fi
 ########################################################
 
 #get the lowest enregy TS and set up benchmarking if requried
-def Getlowest(title,conf_opt,utilities,benchmark):
+def Getlowest(title,conf_opt,utilities,benchmark,runlog):
     if len(title) > 20:
         tmptitle=title[0:10]
     else:
@@ -1249,7 +1249,7 @@ work={1}
 cd $work
 time=$(date)
 echo "$SLURM_JOB_NAME $time"  >> ../status.txt
-echo "$SLURM_JOB_NAME autots reached endpoint. Lowest ts in $work at $time" >> /scratch/neal.pa/autots-runlog/{0}
+echo "$SLURM_JOB_NAME autots reached endpoint. Lowest ts in $work at $time" >> {4}/{0}
 if test -f {0}-ts-energies.txt 
     then 
     rm {0}-ts-energies.txt
@@ -1264,7 +1264,7 @@ obabel {0}.log -o xyz -O {0}.xyz
 python3 ../utilities/xyz2com.py {0}.xyz benchmark
 for i in {0}*com; do echo $i >> {0}-coms.txt; done
 sbatch --parsable {0}-tier0.sbatch
-""".format(title,conf_opt,utilities,tmptitle)
+""".format(title,conf_opt,utilities,tmptitle,runlog)
 
     else:
         lowest="""#!/bin/bash
@@ -1281,14 +1281,14 @@ work={1}
 cd $work
 time=$(date)
 echo "$SLURM_JOB_NAME $time" >> ../status.txt
-echo "$SLURM_JOB_NAME autots reached endpoint. Lowest ts in $work at $time" >> /scratch/neal.pa/autots-runlog/{0}
+echo "$SLURM_JOB_NAME autots reached endpoint. Lowest ts in $work at $time" >> {5}/{0}
 if test -f {3}-ts-energies.txt
     then
     rm {3}-ts-energies.txt
 fi
 
 bash {2}/get-lowest.sh {3} conf_opt
-""".format(title,conf_opt,utilities,title,tmptitle)
+""".format(title,conf_opt,utilities,title,tmptitle,runlog)
 
     return lowest
 
@@ -1356,19 +1356,19 @@ def main():
         if b == 1:
             CRESTdir,ORCAdir=Conf_setup(conf_search,title)
             with open('{0}/{1}/CREST/{1}-CREST.sbatch'.format(conf_search,title),'w') as batch:
-                batch.write(Conf_input(title,ts_guess,user,utilities,c1,a1,a2,c2,CRESTdir,ORCAdir,charge,multiplicity,CRESTcores,CRESTmem,CRESTtime,CRESTpartition,CRESTmethod,ORCAmethod,ORCAcores,ORCAmem,ORCApartition,ORCAtime,natom,lowest_ts,XTBPATH,LD_LIBRARY_PATH,ORCA_EXE,OPENMPI))
+                batch.write(Conf_input(title,ts_guess,user,utilities,c1,a1,a2,c2,CRESTdir,ORCAdir,charge,multiplicity,CRESTcores,CRESTmem,CRESTtime,CRESTpartition,CRESTmethod,ORCAmethod,ORCAcores,ORCAmem,ORCApartition,ORCAtime,natom,lowest_ts,XTBPATH,LD_LIBRARY_PATH,ORCA_EXE,OPENMPI,errorlog))
             with open('{0}/{1}-submit.sbatch'.format(ts_guess,title),'w') as sbatch:
-                sbatch.write(Sbatch_tsguess(optpartition,optcores,user,optmemory,opttime,len(jobs),ts_guess,title,g16root))
+                sbatch.write(Sbatch_tsguess(optpartition,optcores,user,optmemory,opttime,len(jobs),ts_guess,title,g16root,runlog))
             with open('{0}/{1}-submit.sbatch'.format(conf_opt,title),'w') as conf:
                 conf.write(Sbatch_confopt(title,optpartition,optcores,user,optmemory,opttime,conf_opt,conf_search,lowest_ts,specialopts,optroute,optmethod,optbasis,charge,multiplicity,g16root))
             with open('{0}/{1}-coms.txt'.format(ts_guess,title),'w') as coms:
                 coms.write("{0}-rot-{1}.com\n".format(title,index))
             with open('{0}/{1}-lowest.sbatch'.format(lowest_ts,title),'w') as lowest:
-                lowest.write(Getlowest(title,conf_opt,utilities,benchmark))
+                lowest.write(Getlowest(title,conf_opt,utilities,benchmark,runlog))
             with open('{0}/{1}-failed.sbatch'.format(ts_guess,title), 'w') as failed:
                 failed.write(Failed_tsguess(title,user,ts_guess,conf_search,optroute,charge,multiplicity))
             with open('{0}/{1}-failed.sbatch'.format(conf_opt,title),'w') as failed:
-                failed.write(Failed_confopt(title,user,conf_opt,lowest_ts,optroute,charge,multiplicity))
+                failed.write(Failed_confopt(title,user,conf_opt,lowest_ts,optroute,charge,multiplicity,errorlog))
         else:
             with open('{0}/{1}-coms.txt'.format(ts_guess,title),'a') as coms:
                 coms.write("{0}-rot-{1}.com\n".format(title,index))
