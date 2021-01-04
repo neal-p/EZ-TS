@@ -1,4 +1,17 @@
-# Input Parameters
+###########################
+###  System Information ###
+###########################
+#G16
+#g16 profile
+#CREST
+#ORCA
+#default parition name
+#
+
+########################
+### Input Parameters ###
+########################
+#OPTIMIZATIONs:
 optcores=['8','16','16','16']
 optmemory=['31','62','62','62']
 optpartition="short,lopez"
@@ -8,6 +21,7 @@ optbasis="6-31G(d)"
 optroute="opt=(calcfc,ts,noeigen) freq=noraman"
 opttime='1-00:00:00'
 specialopts='empiricaldispersion=GD3bj scrf=(iefpcm,solvent=water)'
+#BENCHMARKING
 benchmarkmethods=['M11L','SVWN','SVWN5','MN12SX','M062X','M06HF','N12SX','MPWb95','PBE1PBE','PBEh1PBE','OHSE2PBE','mPW1PBE','mPW1PW91','APFD','TPSSh','B3P86','tpsskcis','B3LYP','BHandH','BMK','MPWB95','MPWPW91','bb95','wb97xd','wb97','wb97x','cam-b3lyp','LC-wHPBE']
 benchmarkspecialopts=['scrf=(iefpcm,solvent=water)','scrf=(iefpcm,solvent=water)','scrf=(iefpcm,solvent=water)','scrf=(iefpcm,solvent=water)','scrf=(iefpcm,solvent=water)','scrf=(iefpcm,solvent=water)','scrf=(iefpcm,solvent=water)','scrf=(iefpcm,solvent=water) IOp(3/76=0690003100)','scrf=(iefpcm,solvent=water) empiricaldispersion=GD3bj','scrf=(iefpcm,solvent=water)','scrf=(iefpcm,solvent=water)','scrf=(iefpcm,solvent=water)','scrf=(iefpcm,solvent=water)','scrf=(iefpcm,solvent=water)','scrf=(iefpcm,solvent=water)','scrf=(iefpcm,solvent=water)','scrf=(iefpcm,solvent=water) IOp(3/76=0870001300)','scrf=(iefpcm,solvent=water) empiricaldispersion=GD3bj','scrf=(iefpcm,solvent=water)','scrf=(iefpcm,solvent=water) empiricaldispersion=GD3bj','scrf=(iefpcm,solvent=water) IOp(3/76=0560004400)','scrf=(iefpcm,solvent=water) IOp(3/76=0572004280)','scrf=(iefpcm,solvent=water) IOp(3/76=0580004200)','scrf=(iefpcm,solvent=water)','scrf=(iefpcm,solvent=water)','scrf=(iefpcm,solvent=water)','scrf=(iefpcm,solvent=water) empiricaldispersion=GD3bj','']
 benchmarkbasis=[['6-31G(d)'],['6-31+G(d,p)','6-311+G(d,p)'],['cc-pvdz','aug-cc-pvdz','cc-pvtz','aug-cc-pvtz']]
