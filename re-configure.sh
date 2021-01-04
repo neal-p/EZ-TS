@@ -18,6 +18,7 @@ elif [[ "$currentdir" == *lowest_ts* ]]
     cd ../input
 elif [[ "$currentdir" == *input* ]]
     then 
+    :
 else
     cd input
 fi
