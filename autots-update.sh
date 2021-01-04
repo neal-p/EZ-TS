@@ -1,6 +1,6 @@
 #!/bin/bash
-cd /home/$USER/autots
+cd ~/EZTS
 git reset --hard
 git pull origin
 bash init.sh
-echo "AUTOTS up to date"
+echo "EZTS up to date"
