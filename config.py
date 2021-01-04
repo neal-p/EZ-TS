@@ -5,7 +5,7 @@
 g16root='/work/lopez/'
 #CREST
 XTBPATH='/work/lopez/xtb/'
-LD_LIBRARY_PATH="/work/lopez/orca_4_2_1_linux_x86-64_shared_openmpi216/":"/work/lopez/OpenBLAS/":$LD_LIBRARY_PATH
+LD_LIBRARY_PATH='"/work/lopez/orca_4_2_1_linux_x86-64_shared_openmpi216/":"/work/lopez/OpenBLAS/":$LD_LIBRARY_PATH'
 #ORCA
 ORCA_EXE='/work/lopez/orca_4_2_1_linux_x86-64_shared_openmpi216/'
 OPENMPI='/work/lopez/openmpi-2.1.6/'
