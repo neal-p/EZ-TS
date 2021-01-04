@@ -177,144 +177,9 @@ class Element:
     def getCovR(self):
         return self.__CovR
 
-#Initial ts_guess Input
-def Sbatch_tsguess(optpartition,optcores,user,optmemory,opttime,njobs,ts_guess,title):
-    if len(title) > 20:
-        tmptitle=title[0:10]
-    else:
-        tmptitle=title
-
-    sbatch="""#!/bin/bash
-#SBATCH --job-name={7}-tsguess
-#SBATCH --output=out.o
-#SBATCH --error=out.e
-#SBATCH --partition={1}
-#SBATCH --nodes=1
-#SBATCH --ntasks={2}
-#SBATCH --mail-type=END
-#SBATCH --mail-user={3}
-#SBATCH --mem={4}G
-#SBATCH --time={5}
-#SBATCH --array=1-12
-hostname
-
-work={6}
-cd $work
-
-if [[ $SLURM_ARRAY_TASK_ID == 1 ]]
-    then
-    sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID ../conf_search/{0}/CREST/{0}-CREST.sbatch
-    sbatch --dependency=afternotok:$SLURM_ARRAY_JOB_ID {0}-failed.sbatch
-    time=$(date)
-    echo "$SLURM_JOB_NAME $time" >> ../status.txt
-    echo "$SLURM_JOB_NAME autots started in $work" >> /scratch/neal.pa/autots-runlog/{0}
-else
-    sleep 120s
-fi
-
-input=$(sed "${{SLURM_ARRAY_TASK_ID}}q;d" {0}-coms.txt)
-export INPUT=$input
-export WORKDIR=$work
-export GAUSS_SCRDIR=$work
-export g16root=/work/lopez/
-. $g16root/g16/bsd/g16.profile
-
-cd $WORKDIR
-$g16root/g16/g16 $INPUT
-""".format(title,optpartition,optcores[0],user,optmemory[0],opttime,ts_guess,tmptitle)
-    return sbatch
-
-
-def Failed_tsguess(title,user,ts_guess,conf_search,optroute,charge,multiplicity):
-    if len(title) > 20:
-        tmptitle=title[0:10]
-    else:
-        tmptitle=title
-
-    batch="""#!/bin/bash
-#SBATCH --job-name={7}-failedtsguess
-#SBATCH --output=resubmit.o
-#SBATCH --error=resubmit.e
-#SBATCH --partition=debug
-#SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --mem=1G
-#SBATCH --time=00:20:00
-hostname
-
-work={2}
-cd $work
-touch failed-script-ran
-time=$(date)
-echo "$SLURM_JOB_NAME $time" >> ../status.txt
-
-if test -f {0}-resubmit.txt
-    then
-    nresub=$(sed "1q;d" {0}-resubmit.txt)
-else
-    nresub=0
-fi
-nresub=$((nresub+=1))
-if [[ $nresub -lt 2 ]]
-    then
-    rm {0}-resubmit.txt
-    echo $nresub >> {0}-resubmit.txt
-    for i in {0}*log
-        do
-        finished=$(tail $i | grep 'Normal termination' -c )
-        if [[ $finished -lt 1 ]]
-            then
-            maxiter=$(grep "Number of steps exceeded" $i)
-            if [[ $maxiter -gt 0 ]]
-                then
-                sed -i '1,/{3} {4}/!d' ${{i%.*}}.com
-                obabel $i -o xyz |tail -n +3 >> ${{i%.*}}.com
-                echo " " >> ${{i%.*}}.com
-                echo ${{i%.*}}.com >> {0}-resubmit.txt
-            else
-                sed -i '1,/{3} {4}/!d' ${{i%.*}}.com
-                obabel $i -o xyz |tail -n +3 >> ${{i%.*}}.com
-                echo " " >> ${{i%.*}}.com
-                echo ${{i%.*}}.com >> {0}-resubmit.txt
-
-            fi
-        fi
-    done
-    toresub=$(cat {0}-resubmit.txt |wc -l)
-    currentarray=$(sed "12q;d" {0}-submit.sbatch)
-    sed -i "s/$currentarray/#SBATCH --array=2-$toresub/g" {0}-submit.sbatch
-    sed -i "s/{0}-coms.txt/{0}-resubmit.txt/g" {0}-submit.sbatch
-    ID=$(sbatch --parsable {0}-submit.sbatch)
-    sbatch --dependency=afterok:$ID {5}/{0}/CREST/{0}-CREST.sbatch
-    sbatch --dependency=afternotok:$ID {0}-failed.sbatch
-
-elif [[ $nresub == 2 ]]
-    then
-    touch freqonly
-    rm {0}-resubmit.txt
-    echo $nresub >> {0}-resubmit.txt
-    for i in {0}*log
-        do
-        finished=$(tail $i | grep 'Normal termination' -c )
-        if [[ $finished -lt 1 ]]
-            then
-            sed -i '1,/{3} {4}/!d' ${{i%.*}}.com
-            obabel $i -o xyz |tail -n +3 >> ${{i%.*}}.com
-            echo " " >> ${{i%.*}}.com
-            echo ${{i%.*}}.com >> {0}-resubmit.txt
-            sed -i 's/{6}/freq=noraman/g' ${{i%.*}}.com
-        fi
-    done
-    toresub=$(cat {0}-resubmit.txt |wc -l)
-    currentarray=$(sed "12q;d" {0}-submit.sbatch)
-    sed -i "s/$currentarray/#SBATCH --array=2-$toresub/g" {0}-submit.sbatch
-    sed -i "s/{0}-coms.txt/resubmit.txt/g" {0}-submit.sbatch
-    ID=$(sbatch --parsable {0}-submit.sbatch)
-    sbatch --dependency=afterok:$ID {5}/{0}/CREST/{0}-CREST.sbatch
-    sbatch --dependency=afternotok:$ID {0}-failed.sbatch
-fi
-""".format(title,user,ts_guess,charge,multiplicity,conf_search,optroute,tmptitle)
-    return batch
+#################
+### Functions ###
+#################
 
 def Ang(xyz,a,b,c):
     #a<-b->c
@@ -767,8 +632,156 @@ def Conf_setup(conf_search,title):
     ORCAdir = '{0}/{1}/ORCA'.format(conf_search, title)
     return(CRESTdir,ORCAdir)
 
+########################
+### Scripts to write ###
+########################
 
+#INITIAL TS GUESS SCRIPTS#
+##########################
 
+#sbatch for tsguess - submits firt optimizations
+def Sbatch_tsguess(optpartition,optcores,user,optmemory,opttime,njobs,ts_guess,title):
+    if len(title) > 20:
+        tmptitle=title[0:10]
+    else:
+        tmptitle=title
+
+    sbatch="""#!/bin/bash
+#SBATCH --job-name={7}-tsguess
+#SBATCH --output=out.o
+#SBATCH --error=out.e
+#SBATCH --partition={1}
+#SBATCH --nodes=1
+#SBATCH --ntasks={2}
+#SBATCH --mail-type=END
+#SBATCH --mail-user={3}
+#SBATCH --mem={4}G
+#SBATCH --time={5}
+#SBATCH --array=1-12
+hostname
+
+work={6}
+cd $work
+
+if [[ $SLURM_ARRAY_TASK_ID == 1 ]]
+    then
+    sbatch --dependency=afterok:$SLURM_ARRAY_JOB_ID ../conf_search/{0}/CREST/{0}-CREST.sbatch
+    sbatch --dependency=afternotok:$SLURM_ARRAY_JOB_ID {0}-failed.sbatch
+    time=$(date)
+    echo "$SLURM_JOB_NAME $time" >> ../status.txt
+    echo "$SLURM_JOB_NAME autots started in $work" >> /scratch/neal.pa/autots-runlog/{0}
+else
+    sleep 120s
+fi
+
+input=$(sed "${{SLURM_ARRAY_TASK_ID}}q;d" {0}-coms.txt)
+export INPUT=$input
+export WORKDIR=$work
+export GAUSS_SCRDIR=$work
+export g16root=/work/lopez/
+. $g16root/g16/bsd/g16.profile
+
+cd $WORKDIR
+$g16root/g16/g16 $INPUT
+""".format(title,optpartition,optcores[0],user,optmemory[0],opttime,ts_guess,tmptitle)
+    return sbatch
+
+# failed script for tsguess - finds failed jobs and resubmits them. Up to 3 tries, then just frequencies are computed
+def Failed_tsguess(title,user,ts_guess,conf_search,optroute,charge,multiplicity):
+    if len(title) > 20:
+        tmptitle=title[0:10]
+    else:
+        tmptitle=title
+
+    batch="""#!/bin/bash
+#SBATCH --job-name={7}-failedtsguess
+#SBATCH --output=resubmit.o
+#SBATCH --error=resubmit.e
+#SBATCH --partition=debug
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --mem=1G
+#SBATCH --time=00:20:00
+hostname
+
+work={2}
+cd $work
+touch failed-script-ran
+time=$(date)
+echo "$SLURM_JOB_NAME $time" >> ../status.txt
+
+if test -f {0}-resubmit.txt
+    then
+    nresub=$(sed "1q;d" {0}-resubmit.txt)
+else
+    nresub=0
+fi
+nresub=$((nresub+=1))
+if [[ $nresub -lt 2 ]]
+    then
+    rm {0}-resubmit.txt
+    echo $nresub >> {0}-resubmit.txt
+    for i in {0}*log
+        do
+        finished=$(tail $i | grep 'Normal termination' -c )
+        if [[ $finished -lt 1 ]]
+            then
+            maxiter=$(grep "Number of steps exceeded" $i)
+            if [[ $maxiter -gt 0 ]]
+                then
+                sed -i '1,/{3} {4}/!d' ${{i%.*}}.com
+                obabel $i -o xyz |tail -n +3 >> ${{i%.*}}.com
+                echo " " >> ${{i%.*}}.com
+                echo ${{i%.*}}.com >> {0}-resubmit.txt
+            else
+                sed -i '1,/{3} {4}/!d' ${{i%.*}}.com
+                obabel $i -o xyz |tail -n +3 >> ${{i%.*}}.com
+                echo " " >> ${{i%.*}}.com
+                echo ${{i%.*}}.com >> {0}-resubmit.txt
+
+            fi
+        fi
+    done
+    toresub=$(cat {0}-resubmit.txt |wc -l)
+    currentarray=$(sed "12q;d" {0}-submit.sbatch)
+    sed -i "s/$currentarray/#SBATCH --array=2-$toresub/g" {0}-submit.sbatch
+    sed -i "s/{0}-coms.txt/{0}-resubmit.txt/g" {0}-submit.sbatch
+    ID=$(sbatch --parsable {0}-submit.sbatch)
+    sbatch --dependency=afterok:$ID {5}/{0}/CREST/{0}-CREST.sbatch
+    sbatch --dependency=afternotok:$ID {0}-failed.sbatch
+
+elif [[ $nresub == 2 ]]
+    then
+    touch freqonly
+    rm {0}-resubmit.txt
+    echo $nresub >> {0}-resubmit.txt
+    for i in {0}*log
+        do
+        finished=$(tail $i | grep 'Normal termination' -c )
+        if [[ $finished -lt 1 ]]
+            then
+            sed -i '1,/{3} {4}/!d' ${{i%.*}}.com
+            obabel $i -o xyz |tail -n +3 >> ${{i%.*}}.com
+            echo " " >> ${{i%.*}}.com
+            echo ${{i%.*}}.com >> {0}-resubmit.txt
+            sed -i 's/{6}/freq=noraman/g' ${{i%.*}}.com
+        fi
+    done
+    toresub=$(cat {0}-resubmit.txt |wc -l)
+    currentarray=$(sed "12q;d" {0}-submit.sbatch)
+    sed -i "s/$currentarray/#SBATCH --array=2-$toresub/g" {0}-submit.sbatch
+    sed -i "s/{0}-coms.txt/resubmit.txt/g" {0}-submit.sbatch
+    ID=$(sbatch --parsable {0}-submit.sbatch)
+    sbatch --dependency=afterok:$ID {5}/{0}/CREST/{0}-CREST.sbatch
+    sbatch --dependency=afternotok:$ID {0}-failed.sbatch
+fi
+""".format(title,user,ts_guess,charge,multiplicity,conf_search,optroute,tmptitle)
+    return batch
+
+# Conformational Search Scripts #
+#################################
+
+#conformatinoal search input - write 
 def Conf_input(title,ts_guess,user,utilities,c1,a1,a2,c2,CRESTdir,ORCAdir,charge,multiplicity,CRESTcores,CRESTmem,CRESTtime,CRESTpartition,CRESTmethod,ORCAmethod,ORCAcores,ORCAmem,ORCApartition,ORCAtime,natom,lowest_ts):
     if len(title) > 20:
         tmptitle=title[0:10]
@@ -947,7 +960,10 @@ end
     return(CRESTsbatch)
 
 
-#Conformer optimization
+# Conformer Optimization Scripts #
+##################################
+
+#sbatch for confopt - submits the conformers for unconstrained optimization
 def Sbatch_confopt(title,optpartition,optcores,user,optmemory,opttime,conf_opt,conf_search,lowest_ts,specialopts,optroute,optmethod,optbasis,charge,multiplicity):
     if len(title) > 20:
         tmptitle=title[0:10]
@@ -1053,7 +1069,7 @@ autots script
 
     return conf
 
-
+# failed script for conf opt - resubmits the failed jobs, up to 3 times
 def Failed_confopt(title,user,conf_opt,lowest_ts,optroute,charge,multiplicity):
     if len(title) > 20:
         tmptitle=title[0:10]
@@ -1202,7 +1218,10 @@ fi
 
     return batch
 
-#Lowest energy scripts
+# Extracting lowest energy TS and Benchmarking Scripts #
+########################################################
+
+#get the lowest enregy TS and set up benchmarking if requried
 def Getlowest(title,conf_opt,utilities,benchmark):
     if len(title) > 20:
         tmptitle=title[0:10]
@@ -1269,14 +1288,19 @@ bash {2}/get-lowest.sh {3} conf_opt
     return lowest
 
 
+########################
+### Perform Setup ###
+########################
+
 def main():
     ## This is the main function
 
     header="""
 -------------------------------------------------------
 
-    AUTOTS:  Automatic Transition State Workflow
-
+    EZTS:  Automatic Transition State Workflow
+                         
+                         Patrick Neal and Dan Adrion
                          feat. MoRot - Jingbai Li
 
 -------------------------------------------------------
@@ -1284,41 +1308,6 @@ def main():
     print(header)
     with open('rotation.out','w') as log:
         log.write(header)
-
-
-    usage="""
-      python3 MoRot.py -c input.xyz [more options]
-      python3 MoRot.py -h for help
-
-    Or prepare a text file that contains a list of xyz or log files.
-
-    Note:
-    ====
-    In the list file, axis atoms can be set with
-
-    A1 1 A2 2 C1 3 C2 4
-
-    The positios are defined by the following molecular graph:
-
-            R -- C1 -- A1 -- A2 -- C2 -- R
-
-    If C1 or/and C2 are not given, MoRot will search the closet atom to A1 and A2
-    If A2 is not given, A1 should be a element symbol instead of a position.
-    MoRot will find the closest two atoms of the given element as A1 and A2.
-    The default element is N. In this case, C1 and C2 will be ignored and automatically searched.
-
-    In the list file, individule rotation angles can be set with
-
-    R1 0 R2 0 R12 0 V1 0 V2 0
-
-    The angles are defined by the four atoms C1, A1, A2, and C2 as:
-
-    R1:  rotation angle around C1 -- A1
-    R2:  rotation angle around C2 -- A2
-    R12: rotation angle around A1 -- A2
-    V1:  rotation angle around the norm of C1 -- A1 -- A2 at A1
-    V2:  rotation angle around the norm of A1 -- A2 -- C2 at A2
-"""
 
     description=''
     parser = OptionParser(usage=usage, description=description)
