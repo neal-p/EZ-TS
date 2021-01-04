@@ -10,8 +10,13 @@ LD_LIBRARY_PATH="/work/lopez/orca_4_2_1_linux_x86-64_shared_openmpi216/":"/work/
 ORCA_EXE='/work/lopez/orca_4_2_1_linux_x86-64_shared_openmpi216/'
 OPENMPI='/work/lopez/openmpi-2.1.6/'
 
-#default parition name
+#default parition name used for utililies like the archieve feature
 partition='short'
+
+#EZTS error log directory - directory where you want to store information about calculation errors
+errorlog='/scratch/neal.pa/autots-errors/
+#EZTS run log - directory where you want to store information about instances of EZTS
+runlog='/scratch/neal.pa/autots-runlog/
 
 
 ########################
