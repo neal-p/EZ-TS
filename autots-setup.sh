@@ -1,10 +1,28 @@
 #!/bin/bash
 
+
+benchmark=''
+smiles=''
+benchmarking=''
+
+while getopts 's:b' flag; do
+  case "${flag}" in
+    b) benchmarking='--benchmark' ;;
+    s) smiles="${OPTARG}" ;;
+       exit 1 ;;
+  esac
+done
+
 #Set up directories: conf_opt  conf_search  input  lowest_ts  ts_guess  utilities
 workdir=`pwd`
 
-if [ $2 == 'smiles' ]
+if [ -z ${smiles+x} ]
     then
+    #no smiles to convert
+    pass
+    else
+    python3 ~/EZTS/smiles23D.py $smiles
+fi
     
 
 if test -f input/ts_guess-list.txt
@@ -83,4 +101,4 @@ echo "conf_opt='$workdir/conf_opt'" >> utilities/config.py
 echo "inputdir='$workdir/input'" >> utilities/config.py
 
 cd input
-python3 ../utilities/generate-inputs.py -l ts_guess-list.txt $1
+python3 ../utilities/generate-inputs.py -l ts_guess-list.txt $benchmarking
