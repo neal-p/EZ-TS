@@ -687,7 +687,7 @@ $g16root/g16/g16 $INPUT
     return sbatch
 
 # failed script for tsguess - finds failed jobs and resubmits them. Up to 3 tries, then just frequencies are computed
-def Failed_tsguess(title,user,ts_guess,conf_search,optroute,charge,multiplicity):
+def Failed_tsguess(title,user,ts_guess,conf_search,optroute,charge,multiplicity,short_partition):
     if len(title) > 20:
         tmptitle=title[0:10]
     else:
@@ -697,7 +697,7 @@ def Failed_tsguess(title,user,ts_guess,conf_search,optroute,charge,multiplicity)
 #SBATCH --job-name={7}-failedtsguess
 #SBATCH --output=resubmit.o
 #SBATCH --error=resubmit.e
-#SBATCH --partition=debug
+#SBATCH --partition={8}
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --mem=1G
@@ -775,7 +775,7 @@ elif [[ $nresub == 2 ]]
     sbatch --dependency=afterok:$ID {5}/{0}/CREST/{0}-CREST.sbatch
     sbatch --dependency=afternotok:$ID {0}-failed.sbatch
 fi
-""".format(title,user,ts_guess,charge,multiplicity,conf_search,optroute,tmptitle)
+""".format(title,user,ts_guess,charge,multiplicity,conf_search,optroute,tmptitle,short_partition)
     return batch
 
 # Conformational Search Scripts #
@@ -1075,7 +1075,7 @@ autots script
     return conf
 
 # failed script for conf opt - resubmits the failed jobs, up to 3 times
-def Failed_confopt(title,user,conf_opt,lowest_ts,optroute,charge,multiplicity,errorlog):
+def Failed_confopt(title,user,conf_opt,lowest_ts,optroute,charge,multiplicity,errorlog,short_partition):
     if len(title) > 20:
         tmptitle=title[0:10]
     else:
@@ -1085,7 +1085,7 @@ def Failed_confopt(title,user,conf_opt,lowest_ts,optroute,charge,multiplicity,er
 #SBATCH --job-name={6}-failedconf
 #SBATCH --output=resubmit.o
 #SBATCH --error=resubmit.e
-#SBATCH --partition=debug
+#SBATCH --partition={8}
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --mem=1G
@@ -1219,7 +1219,7 @@ else
     echo "{0} failed too many times. RUN TERMINATED" >> {7}/{0}
 
 fi
-""".format(title,user,conf_opt,charge, multiplicity,lowest_ts,tmptitle,errorlog)
+""".format(title,user,conf_opt,charge, multiplicity,lowest_ts,tmptitle,errorlog,short_partition)
 
     return batch
 
@@ -1227,7 +1227,7 @@ fi
 ########################################################
 
 #get the lowest enregy TS and set up benchmarking if requried
-def Getlowest(title,conf_opt,utilities,benchmark,runlog):
+def Getlowest(title,conf_opt,utilities,benchmark,runlog,short_partition):
     if len(title) > 20:
         tmptitle=title[0:10]
     else:
@@ -1238,7 +1238,7 @@ def Getlowest(title,conf_opt,utilities,benchmark,runlog):
 #SBATCH --job-name={3}-getlowbench
 #SBATCH --output=out.o
 #SBATCH --error=out.e
-#SBATCH --partition=debug
+#SBATCH --partition={5}
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --mem=1G
@@ -1264,14 +1264,14 @@ obabel {0}.log -o xyz -O {0}.xyz
 python3 ../utilities/xyz2com.py {0}.xyz benchmark
 for i in {0}*com; do echo $i >> {0}-coms.txt; done
 sbatch --parsable {0}-tier0.sbatch
-""".format(title,conf_opt,utilities,tmptitle,runlog)
+""".format(title,conf_opt,utilities,tmptitle,runlog,short_partition)
 
     else:
         lowest="""#!/bin/bash
 #SBATCH --job-name={4}-getlow
 #SBATCH --output=out.o
 #SBATCH --error=out.e
-#SBATCH --partition=debug
+#SBATCH --partition={6}
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --mem=1G
@@ -1288,7 +1288,7 @@ if test -f {3}-ts-energies.txt
 fi
 
 bash {2}/get-lowest.sh {3} conf_opt
-""".format(title,conf_opt,utilities,title,tmptitle,runlog)
+""".format(title,conf_opt,utilities,title,tmptitle,runlog,short_partition)
 
     return lowest
 
@@ -1364,11 +1364,11 @@ def main():
             with open('{0}/{1}-coms.txt'.format(ts_guess,title),'w') as coms:
                 coms.write("{0}-rot-{1}.com\n".format(title,index))
             with open('{0}/{1}-lowest.sbatch'.format(lowest_ts,title),'w') as lowest:
-                lowest.write(Getlowest(title,conf_opt,utilities,benchmark,runlog))
+                lowest.write(Getlowest(title,conf_opt,utilities,benchmark,runlog,short_partition))
             with open('{0}/{1}-failed.sbatch'.format(ts_guess,title), 'w') as failed:
-                failed.write(Failed_tsguess(title,user,ts_guess,conf_search,optroute,charge,multiplicity))
+                failed.write(Failed_tsguess(title,user,ts_guess,conf_search,optroute,charge,multiplicity,short_partition))
             with open('{0}/{1}-failed.sbatch'.format(conf_opt,title),'w') as failed:
-                failed.write(Failed_confopt(title,user,conf_opt,lowest_ts,optroute,charge,multiplicity,errorlog))
+                failed.write(Failed_confopt(title,user,conf_opt,lowest_ts,optroute,charge,multiplicity,errorlog,short_partition))
         else:
             with open('{0}/{1}-coms.txt'.format(ts_guess,title),'a') as coms:
                 coms.write("{0}-rot-{1}.com\n".format(title,index))
