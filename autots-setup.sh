@@ -23,6 +23,7 @@ if [ -z ${smiles+x} ]
     pass
     else
     echo "Reading smiles from $smiles"
+    echo ""
     python3 ~/EZTS/smiles23D.py $smiles
 
 #unfortunately a bit messy to convert to pdb then xyz, but rdkit is struggling to directly to xyz
