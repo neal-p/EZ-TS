@@ -1,8 +1,16 @@
 from rdkit.Chem import AllChem
 import numpy as np
 
-input=
+input=sys.argv[1]
 allinputs=np.genfromtxt(input,dtype='str')
+
+# input should be of the format:
+
+#NAME    SMILES
+#NAME    SMILES
+#...     ...
+
+
 smiles=allinputs[:,0]
 names=allinputs[:,1]
 for b,c in enumerate(smiles):
