@@ -1,13 +1,12 @@
 #!/bin/bash
 
 
-benchmark=''
+benchmarking_flag=''
 smiles=''
-benchmarking=''
 
 while getopts 's:b' flag; do
   case "${flag}" in
-    b) benchmarking='--benchmark' ;;
+    b) benchmarking_flag='--benchmark' ;;
     s) smiles="${OPTARG}" ;;
        exit 1 ;;
   esac
@@ -101,4 +100,4 @@ echo "conf_opt='$workdir/conf_opt'" >> utilities/config.py
 echo "inputdir='$workdir/input'" >> utilities/config.py
 
 cd input
-python3 ../utilities/generate-inputs.py -l ts_guess-list.txt $benchmarking
+python3 ../utilities/generate-inputs.py -l ts_guess-list.txt $benchmarking_flag
