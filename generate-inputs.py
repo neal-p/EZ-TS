@@ -640,7 +640,7 @@ def Conf_setup(conf_search,title):
 ##########################
 
 #sbatch for tsguess - submits firt optimizations
-def Sbatch_tsguess(optpartition,optcores,user,optmemory,opttime,njobs,ts_guess,title):
+def Sbatch_tsguess(optpartition,optcores,user,optmemory,opttime,njobs,ts_guess,title,g16root):
     if len(title) > 20:
         tmptitle=title[0:10]
     else:
@@ -678,12 +678,12 @@ input=$(sed "${{SLURM_ARRAY_TASK_ID}}q;d" {0}-coms.txt)
 export INPUT=$input
 export WORKDIR=$work
 export GAUSS_SCRDIR=$work
-export g16root=/work/lopez/
+export g16root={8}
 . $g16root/g16/bsd/g16.profile
 
 cd $WORKDIR
 $g16root/g16/g16 $INPUT
-""".format(title,optpartition,optcores[0],user,optmemory[0],opttime,ts_guess,tmptitle)
+""".format(title,optpartition,optcores[0],user,optmemory[0],opttime,ts_guess,tmptitle,g16root)
     return sbatch
 
 # failed script for tsguess - finds failed jobs and resubmits them. Up to 3 tries, then just frequencies are computed
@@ -782,7 +782,7 @@ fi
 #################################
 
 #conformatinoal search input - write 
-def Conf_input(title,ts_guess,user,utilities,c1,a1,a2,c2,CRESTdir,ORCAdir,charge,multiplicity,CRESTcores,CRESTmem,CRESTtime,CRESTpartition,CRESTmethod,ORCAmethod,ORCAcores,ORCAmem,ORCApartition,ORCAtime,natom,lowest_ts):
+def Conf_input(title,ts_guess,user,utilities,c1,a1,a2,c2,CRESTdir,ORCAdir,charge,multiplicity,CRESTcores,CRESTmem,CRESTtime,CRESTpartition,CRESTmethod,ORCAmethod,ORCAcores,ORCAmem,ORCApartition,ORCAtime,natom,lowest_ts,XTBPATH,LD_LIBRARY_PATH,ORCA_EXE,OPENMPI):
     if len(title) > 20:
         tmptitle=title[0:10]
     else:
@@ -812,12 +812,12 @@ ulimit -s unlimited
 export OMP_STACKSIZE={4}G
 export OMP_NUM_THREADS={2},1
 
-export XTBPATH="/work/lopez/xtb/"
+export XTBPATH={12}
 export XTBHOME=$XTBPATH
 export OMP_MAX_ACTIVE_LEVELS=1
 export LD_LIBRARY_PATH=${{LD_LIBRARY_PATH}}:${{XTBHOME}}/lib
 export PYTHONPATH=${{PYTHONPATH}}:${{XTBHOME}}/python
-export LD_LIBRARY_PATH="/work/lopez/orca_4_2_1_linux_x86-64_shared_openmpi216/":"/work/lopez/OpenBLAS/":$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH={13}
 
 work={8}
 cd $work
@@ -825,7 +825,7 @@ cp {0}.xyz {11}.xyz
 cp {0}.c {11}.c
 cp {11}.xyz {11}.ref
 
-/work/lopez/xtb/crest {11}.xyz {9} -cinp {11}.c > {0}.out
+$XTBPATH/crest {11}.xyz {9} -cinp {11}.c > {0}.out
 cp crest_conformers.xyz ../ORCA/{0}-all.xyz
 
 #ensure that CREST did not capitalize elements with 2 letters
@@ -837,7 +837,7 @@ sleep 120s
 nstruct=$(ls -la ../ORCA/{0}-all-sorted-conf*.xyz |wc -l)
 sed -i "s/END/$nstruct/g" ../ORCA/*sbatch
 ORCAID=$(sbatch --parsable ../ORCA/{0}-ORCA.sbatch)
-    """.format(title, CRESTpartition, CRESTcores, user, CRESTmem, CRESTtime, ts_guess,utilities,CRESTdir,CRESTmethod,conf_opt,tmptitle)
+    """.format(title, CRESTpartition, CRESTcores, user, CRESTmem, CRESTtime, ts_guess,utilities,CRESTdir,CRESTmethod,conf_opt,tmptitle,XTBPATH,LD_LIBRARY_PATH)
 
     C1=c1+1
     C2=c2+1
@@ -882,8 +882,8 @@ $end""".format(C1, A1, A2, C2, A2, A1, tmptitle, include)
 #SBATCH --array=1-END%100
 
 export WORKDIR={5}
-export ORCA_EXE=/work/lopez/orca_4_2_1_linux_x86-64_shared_openmpi216/
-export OPENMPI=/work/lopez/openmpi-2.1.6/
+export ORCA_EXE={11}
+export OPENMPI={12}
 export LD_LIBRARY_PATH=$OPENMPI/lib:$ORCA_EXE:$LD_LIBRARY_PATH
 export PATH=$OPENMPI/bin:$PATH
 
@@ -938,7 +938,7 @@ fi
 fi
 fi
 
-    """.format(ORCAcores, ORCAtime, title, ORCApartition, ORCAmem, ORCAdir, charge, multiplicity,tmptitle,ORCAmethod)
+    """.format(ORCAcores, ORCAtime, title, ORCApartition, ORCAmem, ORCAdir, charge, multiplicity,tmptitle,ORCAmethod,ORCA_EXE,OPENMPI)
 
     with open('{0}/{1}-ORCA.sbatch'.format(ORCAdir,title), 'w') as ORCAbatch:
         ORCAbatch.write(ORCAsbatch)
@@ -969,7 +969,7 @@ end
 ##################################
 
 #sbatch for confopt - submits the conformers for unconstrained optimization
-def Sbatch_confopt(title,optpartition,optcores,user,optmemory,opttime,conf_opt,conf_search,lowest_ts,specialopts,optroute,optmethod,optbasis,charge,multiplicity):
+def Sbatch_confopt(title,optpartition,optcores,user,optmemory,opttime,conf_opt,conf_search,lowest_ts,specialopts,optroute,optmethod,optbasis,charge,multiplicity,g16root):
     if len(title) > 20:
         tmptitle=title[0:10]
     else:
@@ -1033,7 +1033,7 @@ if [[ ${{SLURM_ARRAY_TASK_ID}} -le $nconf ]]
     export INPUT=$input
     export WORKDIR=$work
     export GAUSS_SCRDIR=$work
-    export g16root=/work/lopez/
+    export g16root={11}
     . $g16root/g16/bsd/g16.profile
 
     cd $WORKDIR
@@ -1050,7 +1050,7 @@ else
     rm {0}-conf$SLURM_ARRAY_TASK_ID.com
 fi
 
-""".format(title,optpartition,optcores[0],user,optmemory[0],opttime,conf_opt,conf_search,charge,multiplicity,tmptitle)
+""".format(title,optpartition,optcores[0],user,optmemory[0],opttime,conf_opt,conf_search,charge,multiplicity,tmptitle,g16root)
 
     for i in range(1, 11):
         inputfile = """%chk={0}-conf{1}.chk
@@ -1356,11 +1356,11 @@ def main():
         if b == 1:
             CRESTdir,ORCAdir=Conf_setup(conf_search,title)
             with open('{0}/{1}/CREST/{1}-CREST.sbatch'.format(conf_search,title),'w') as batch:
-                batch.write(Conf_input(title,ts_guess,user,utilities,c1,a1,a2,c2,CRESTdir,ORCAdir,charge,multiplicity,CRESTcores,CRESTmem,CRESTtime,CRESTpartition,CRESTmethod,ORCAmethod,ORCAcores,ORCAmem,ORCApartition,ORCAtime,natom,lowest_ts))
+                batch.write(Conf_input(title,ts_guess,user,utilities,c1,a1,a2,c2,CRESTdir,ORCAdir,charge,multiplicity,CRESTcores,CRESTmem,CRESTtime,CRESTpartition,CRESTmethod,ORCAmethod,ORCAcores,ORCAmem,ORCApartition,ORCAtime,natom,lowest_ts,XTBPATH,LD_LIBRARY_PATH,ORCA_EXE,OPENMPI))
             with open('{0}/{1}-submit.sbatch'.format(ts_guess,title),'w') as sbatch:
-                sbatch.write(Sbatch_tsguess(optpartition,optcores,user,optmemory,opttime,len(jobs),ts_guess,title))
+                sbatch.write(Sbatch_tsguess(optpartition,optcores,user,optmemory,opttime,len(jobs),ts_guess,title,g16root))
             with open('{0}/{1}-submit.sbatch'.format(conf_opt,title),'w') as conf:
-                conf.write(Sbatch_confopt(title,optpartition,optcores,user,optmemory,opttime,conf_opt,conf_search,lowest_ts,specialopts,optroute,optmethod,optbasis,charge,multiplicity))
+                conf.write(Sbatch_confopt(title,optpartition,optcores,user,optmemory,opttime,conf_opt,conf_search,lowest_ts,specialopts,optroute,optmethod,optbasis,charge,multiplicity,g16root))
             with open('{0}/{1}-coms.txt'.format(ts_guess,title),'w') as coms:
                 coms.write("{0}-rot-{1}.com\n".format(title,index))
             with open('{0}/{1}-lowest.sbatch'.format(lowest_ts,title),'w') as lowest:
