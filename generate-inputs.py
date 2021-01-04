@@ -1381,7 +1381,7 @@ def main():
         sys.stdout.write('Progress: %10s/%s\r' % (n+1,len(jobs)))
 
     print('')
-    with open('summary','w') as out:
+    with open('summary','a') as out:
         out.write(all)
 
 
