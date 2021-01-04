@@ -91,7 +91,7 @@ fi
 #move the smiles file into input if needed
 if ! [ -z ${smiles+x} ]
     then
-    mv $smiles /input
+    mv $smiles input/
 fi
 
 echo "Setup command options used for this run: $benchmarking_flag $smiles" > ./input/summary
