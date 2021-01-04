@@ -23,4 +23,4 @@ for b,c in enumerate(smiles):
     for x,i in enumerate(energies):
         confs[x]=i[1]
     min=np.argmin(confs)
-    AllChem.MolToXYZFile(mol,'{0}.pdb'.format(names[b]),confId=int(min))
+    AllChem.MolToPDBFile(mol,'{0}.pdb'.format(names[b]),confId=int(min))
