@@ -19,11 +19,8 @@ echo "Setup command options used for this run: $benchmarking_flag $smiles" > sum
 #Set up directories: conf_opt  conf_search  input  lowest_ts  ts_guess  utilities
 workdir=`pwd`
 
-if [ -z ${smiles+x} ]
+if ! [ -z ${smiles+x} ]
     then
-    #no smiles to convert
-    pass
-    else
     echo "Reading smiles from $smiles"
     echo ""
     python3 ~/EZTS/smiles23D.py $smiles
@@ -91,6 +88,12 @@ else
     echo " "
     exit 1
 
+fi
+
+#move the smiles file into input if needed
+if ! [ -z ${smiles+x} ]
+    then
+    mv $smiles /input
 fi
 
 cp ~/EZTS/config.py  utilities/
