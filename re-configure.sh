@@ -21,4 +21,7 @@ elif [[ "$currentdir" == *input* ]]
 else
     cd input
 fi
+
+#check if benchmarking was requested
+if 
 python3 ../utilities/generate-inputs.py -l ts_guess-list.txt
