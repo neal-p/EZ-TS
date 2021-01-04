@@ -1,5 +1,6 @@
 from rdkit.Chem import AllChem
 import numpy as np
+import sys
 
 input=sys.argv[1]
 allinputs=np.genfromtxt(input,dtype='str')
