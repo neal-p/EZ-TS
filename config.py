@@ -10,8 +10,11 @@ LD_LIBRARY_PATH='"/work/lopez/orca_4_2_1_linux_x86-64_shared_openmpi216/":"/work
 ORCA_EXE='/work/lopez/orca_4_2_1_linux_x86-64_shared_openmpi216/'
 OPENMPI='/work/lopez/openmpi-2.1.6/'
 
-#default parition name used for utililies like the archieve feature
-partition='short'
+#default parition name used for utililies like the archieve feature that are moderately long ~1 day
+default_partition='short'
+
+#short partition for running really quick job steps like evaluating lowest energy conformer ~10 minutes max
+short_partition='debug'
 
 #EZTS error log directory - directory where you want to store information about calculation errors
 errorlog='/scratch/neal.pa/autots-errors/'
