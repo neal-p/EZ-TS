@@ -827,6 +827,11 @@ cp {11}.xyz {11}.ref
 
 /work/lopez/xtb/crest {11}.xyz {9} -cinp {11}.c > {0}.out
 cp crest_conformers.xyz ../ORCA/{0}-all.xyz
+
+#ensure that CREST did not capitalize elements with 2 letters
+sed -i 's/CL/Cl/g' ../ORCA/{0}-all.xyz
+sed -i 's/BR/Br/g' ../ORCA/{0}-all.xyz
+
 obabel ../ORCA/{0}-all.xyz -O ../ORCA/{0}-all-sorted-conf.xyz -m
 sleep 120s
 nstruct=$(ls -la ../ORCA/{0}-all-sorted-conf*.xyz |wc -l)
