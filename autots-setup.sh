@@ -14,6 +14,8 @@ while getopts ${optstring} arg; do
   esac
 done
 
+echo "Setup command options used for this run: $benchmarking_flag $smiles" > summary
+
 #Set up directories: conf_opt  conf_search  input  lowest_ts  ts_guess  utilities
 workdir=`pwd`
 
