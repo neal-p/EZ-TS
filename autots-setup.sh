@@ -14,8 +14,6 @@ while getopts ${optstring} arg; do
   esac
 done
 
-echo "Setup command options used for this run: $benchmarking_flag $smiles" > summary
-
 #Set up directories: conf_opt  conf_search  input  lowest_ts  ts_guess  utilities
 workdir=`pwd`
 
@@ -95,6 +93,8 @@ if ! [ -z ${smiles+x} ]
     then
     mv $smiles /input
 fi
+
+echo "Setup command options used for this run: $benchmarking_flag $smiles" > ./input/summary
 
 cp ~/EZTS/config.py  utilities/
 cp ~/EZTS/generate-inputs.py utilities/
