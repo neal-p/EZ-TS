@@ -2,6 +2,11 @@
 
 #Set up directories: conf_opt  conf_search  input  lowest_ts  ts_guess  utilities
 workdir=`pwd`
+
+if [ $2 == 'smiles' ]
+    then
+    
+
 if test -f input/ts_guess-list.txt
     then
    # rm input/ts_guess-list.txt
