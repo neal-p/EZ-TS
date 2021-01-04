@@ -23,5 +23,10 @@ else
 fi
 
 #check if benchmarking was requested
-if 
-python3 ../utilities/generate-inputs.py -l ts_guess-list.txt
+benchmark=$(grep "--benchmark" summary -c)
+if [[ $benchmark -gt 0 ]]
+    then
+    python3 ../utilities/generate-inputs.py -l ts_guess-list.txt --benchmark
+    else
+    python3 ../utilities/generate-inputs.py -l ts_guess-list.txt
+fi
