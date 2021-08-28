@@ -1,11 +1,30 @@
 #!/bin/bash
-cp autots-setup.sh ~/bin/autots-setup
-chmod 777 ~/bin/autots-setup
-cp re-configure.sh ~/bin/re-configure
-chmod 777 ~/bin/re-configure
-cp autots-update.sh ~/bin/autots-update
-chmod 777 ~/bin/autots-update
-chmod 777 *sh
-cp autots-clean.sh ~/bin/autots-clean
-chmod 777 ~/bin/autots-clean
-sed -i "/#local workflow variables/i user='$USER@husky.neu.edu'" config.py
+cd ~/EZ-TS
+bindir=~/bin
+if ! [ -d "$bindir" ]
+    then
+    echo "ERROR: No $bindir directory found! to make the EZ-TS command tools easy to use either make a ~/bin directory, or edit the bindir in this ~/EZ-TS/init.sh script to a directory of your choice that is in your path"
+    exit 1
+else
+    chmod 777 *sh EZTS-setup.py
+    cp EZTS-setup.py $bindir/EZTS-setup
+    cp re-configure.sh $bindir/re-configure
+    cp EZTS-update.sh $bindir/EZTS-update
+
+    sed -i '/sys_user=/d' config.py
+    sed -i "/#email for job status information/i sys_user='$USER'" config.py
+fi
+
+#Make default directories to store archived config.py files, runlog and errors, but don't overwrite if already present
+if ! [ -d runlog ]
+    then
+    mkdir runlog
+fi
+if ! [ -d errors ]
+    then
+    mkdir errors
+fi
+if ! [ -d archive ]
+    then
+    mkdir archive
+fi
